@@ -390,57 +390,56 @@ fetch('cart_ajax.php?get_total=1')
     }).catch(() => {});
 
 
-// تهيئة خريطة كربلاء
-document.addEventListener("DOMContentLoaded", function() {
-    // إحداثيات كربلاء المقدسة الافتراضية
-    const karbalaLat = 32.6160;
-    const karbalaLng = 44.0249;
-    
-    // إنشاء الخريطة
-    const map = L.map('checkoutMap').setView([karbalaLat, karbalaLng], 13);
-    
-    // تحميل لوحة الخريطة من OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-    
-    let marker = null;
-    
-    // استرجاع الإحداثيات السابقة إن وجدت في حال الخطأ بالفورم
+// تهيئة خريطة كربلاء باستخدام Google Maps
+let map;
+let marker;
+const karbala = { lat: 32.6160, lng: 44.0249 };
+
+function initMap() {
     const prevLat = document.getElementById('delivery_lat').value;
     const prevLng = document.getElementById('delivery_lng').value;
-    
-    if (prevLat && prevLng) {
-        const prevLatLng = [parseFloat(prevLat), parseFloat(prevLng)];
-        marker = L.marker(prevLatLng, {draggable: true}).addTo(map);
-        map.setView(prevLatLng, 15);
-        setupMarkerEvents(marker);
-    }
-    
-    // النقر على الخريطة لتحديد الموقع
-    map.on('click', function(e) {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
-        
-        document.getElementById('delivery_lat').value = lat;
-        document.getElementById('delivery_lng').value = lng;
-        
-        if (marker) {
-            marker.setLatLng(e.latlng);
-        } else {
-            marker = L.marker(e.latlng, {draggable: true}).addTo(map);
-            setupMarkerEvents(marker);
-        }
+    const initialCenter = (prevLat && prevLng) 
+        ? { lat: parseFloat(prevLat), lng: parseFloat(prevLng) }
+        : karbala;
+
+    map = new google.maps.Map(document.getElementById("checkoutMap"), {
+        zoom: 13,
+        center: initialCenter
     });
-    
-    function setupMarkerEvents(m) {
-        m.on('dragend', function(evt) {
-            const pos = m.getLatLng();
-            document.getElementById('delivery_lat').value = pos.lat;
-            document.getElementById('delivery_lng').value = pos.lng;
+
+    if (prevLat && prevLng) {
+        placeMarker(initialCenter);
+    }
+
+    map.addListener("click", (event) => {
+        placeMarker(event.latLng);
+    });
+}
+
+function placeMarker(latLng) {
+    const lat = (typeof latLng.lat === 'function') ? latLng.lat() : latLng.lat;
+    const lng = (typeof latLng.lng === 'function') ? latLng.lng() : latLng.lng;
+
+    document.getElementById('delivery_lat').value = lat;
+    document.getElementById('delivery_lng').value = lng;
+
+    if (marker) {
+        marker.setPosition(latLng);
+    } else {
+        marker = new google.maps.Marker({
+            position: latLng,
+            map: map,
+            draggable: true
+        });
+
+        marker.addListener("dragend", () => {
+            const pos = marker.getPosition();
+            document.getElementById('delivery_lat').value = pos.lat();
+            document.getElementById('delivery_lng').value = pos.lng();
         });
     }
-});
+}
 </script>
+<script src="https://maps.googleapis.com/maps/api/js?callback=initMap" async defer></script>
+<script>
 <?php include 'footer.php'; ?>

@@ -79,6 +79,7 @@ include 'header.php';
         <a href="admin_products.php"   class="btn btn-outline-success fw-bold btn-sm px-3">📦 المنتجات</a>
         <a href="admin_categories.php" class="btn btn-outline-success fw-bold btn-sm px-3">🏷️ الأقسام</a>
         <a href="admin_orders.php"     class="btn btn-outline-success fw-bold btn-sm px-3">🧾 الطلبات (<?php echo $total_orders; ?>)</a>
+        <a href="admin_support.php"    class="btn btn-outline-success fw-bold btn-sm px-3">💬 الرسائل والدعم</a>
         <a href="admin_users.php"      class="btn btn-outline-success fw-bold btn-sm px-3">👥 المستخدمين</a>
         <a href="admin_coupons.php"    class="btn btn-outline-warning fw-bold btn-sm px-3">🎟️ الكوبونات</a>
         <a href="logout.php"           class="btn btn-danger fw-bold btn-sm px-3">🚪 خروج</a>
@@ -399,5 +400,4 @@ new Chart(document.getElementById('catChart').getContext('2d'), {
   }
 });
 </script>
-</body>
-</html>
+<?php include 'footer.php'; ?>

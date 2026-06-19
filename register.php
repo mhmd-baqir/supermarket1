@@ -15,12 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone     = trim($_POST['phone'] ?? '');
     $full_name = trim($_POST['full_name'] ?? '');
     $address   = trim($_POST['address'] ?? '');
-    
-    // كلمة المرور هي رقم الهاتف لتوافق النظام
-    $password  = $phone;
+    $password  = trim($_POST['password'] ?? '');
 
-    if (empty($phone) || empty($full_name)) {
-        $error = 'يرجى ملء جميع الحقول الإلزامية (رقم الهاتف، الاسم الكامل).';
+    if (empty($phone) || empty($full_name) || empty($password)) {
+        $error = 'يرجى ملء جميع الحقول الإلزامية (رقم الهاتف، كلمة المرور، الاسم الكامل).';
     } else {
         try {
             // التحقق من تكرار رقم الهاتف
@@ -71,13 +69,18 @@ include 'header.php';
             <form method="POST" action="register.php">
                 <!-- الحقول الأساسية -->
                 <div class="mb-3">
-                    <label class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">رقم الهاتف <span class="text-danger">*</span></label>
                     <input type="text" name="phone" class="form-control" placeholder="07XXXXXXXX" required value="<?php echo isset($phone) ? htmlspecialchars($phone) : ''; ?>">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">كلمة المرور <span class="text-danger">*</span></label>
+                    <input type="password" name="password" class="form-control" placeholder="أدخل كلمة مرور قوية للمستقبل" required>
                 </div>
 
                 <!-- البيانات الشخصية -->
                 <div class="mb-3">
-                    <label class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">الاسم الكامل <span class="text-danger">*</span></label>
                     <input type="text" name="full_name" class="form-control" placeholder="مثال: أحمد علي عبد الله" required value="<?php echo isset($full_name) ? htmlspecialchars($full_name) : ''; ?>">
                 </div>
 

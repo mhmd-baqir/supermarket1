@@ -318,4 +318,4 @@ include 'header.php';
 </div>
 
 <!-- FOOTER -->
-include 'footer.php';
+<?php include 'footer.php'; ?>

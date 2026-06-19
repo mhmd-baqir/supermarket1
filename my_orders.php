@@ -10,6 +10,36 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
 
 $user_id = $_SESSION['user_id'];
 
+// معالجة تأكيد الاستلام والتقييم
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_received'])) {
+    $order_id = intval($_POST['order_id']);
+    $rating = intval($_POST['rating'] ?? 5);
+    $feedback = trim($_POST['feedback'] ?? '');
+
+    // تحقق من أن الطلب يخص العميل
+    $check_stmt = $pdo->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
+    $check_stmt->execute([$order_id, $user_id]);
+    $order_data = $check_stmt->fetch();
+
+    if ($order_data) {
+        // تحديث الطلب
+        $update_stmt = $pdo->prepare("UPDATE orders SET customer_received = 1, delivery_rating = ?, delivery_feedback = ? WHERE id = ?");
+        $update_stmt->execute([$rating, $feedback, $order_id]);
+
+        // إرسال إشعار للادمن
+        $admin_msg = "العميل " . ($_SESSION['full_name'] ?? $_SESSION['username']) . " أكد استلام الطلب رقم #{$order_id} وقام بتقييم التوصيل بـ {$rating} نجوم.";
+        $notif_stmt = $pdo->prepare("INSERT INTO notifications (user_id, title, message, type, link) VALUES (NULL, ?, ?, 'order', ?)");
+        $notif_stmt->execute([
+            "✅ تأكيد استلام طلب #{$order_id}",
+            $admin_msg,
+            "admin_orders.php?id={$order_id}"
+        ]);
+
+        header("Location: my_orders.php?success=1");
+        exit;
+    }
+}
+
 // جلب جميع طلبات العميل
 $stmt = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC");
 $stmt->execute([$user_id]);
@@ -45,7 +75,15 @@ include 'header.php';
                                 <span class="fw-bold text-success fs-5">طلب رقم #<?php echo $order['id']; ?></span>
                                 <span class="text-secondary small ms-3">📅 <?php echo date('Y-m-d H:i', strtotime($order['created_at'])); ?></span>
                             </div>
-                            <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <?php if ($order['customer_received'] == 1): ?>
+                                    <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-3 py-2 fw-bold" style="font-size:0.85rem;">📢 تم الاستلام والتقييم</span>
+                                <?php elseif ($order['status'] !== 'cancelled'): ?>
+                                    <button type="button" class="btn btn-sm btn-success fw-bold px-3 py-2" data-bs-toggle="modal" data-bs-target="#receiveModal" data-order-id="<?php echo $order['id']; ?>">
+                                        ✅ تأكيد الاستلام والتقييم
+                                    </button>
+                                <?php endif; ?>
+
                                 <?php 
                                 $status = $order['status'];
                                 if ($status === 'pending') {
@@ -72,14 +110,6 @@ include 'header.php';
                                     <div>📍 <strong>عنوان الشحن:</strong> <?php echo htmlspecialchars($order['address']); ?></div>
                                 </div>
                             </div>
-
-                            <!-- خريطة تتبع الشحنة التفاعلية لكربلاء -->
-                            <?php if ($order['lat'] !== null && $order['lng'] !== null): ?>
-                                <div class="mb-4">
-                                    <div class="fw-bold text-success mb-2 small">🗺️ خريطة تتبع الشحنة الجغرافية في كربلاء:</div>
-                                    <div id="map_<?php echo $order['id']; ?>" style="height: 250px; border-radius: 12px; border: 1px solid rgba(22, 163, 74, 0.25); z-index: 1;"></div>
-                                </div>
-                            <?php endif; ?>
 
                             <!-- قائمة المنتجات للطلب -->
                             <div class="table-responsive">
@@ -120,6 +150,30 @@ include 'header.php';
                                     </tbody>
                                 </table>
                             </div>
+
+                            <!-- تقييم التوصيل والمراسلة -->
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-3 border-top border-secondary border-opacity-10 gap-3">
+                                <div>
+                                    <?php if ($order['customer_received'] == 1): ?>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="text-success fw-bold small">⭐ تقييمك للتوصيل:</span>
+                                            <div>
+                                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                    <span style="color: <?php echo $i <= $order['delivery_rating'] ? '#f59e0b' : 'rgba(255,255,255,0.15)'; ?>;">★</span>
+                                                <?php endfor; ?>
+                                            </div>
+                                            <?php if (!empty($order['delivery_feedback'])): ?>
+                                                <span class="text-muted small ms-2">| 💬 <?php echo htmlspecialchars($order['delivery_feedback']); ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <div>
+                                    <a href="support.php?order_id=<?php echo $order['id']; ?>" class="btn btn-sm btn-outline-danger fw-bold">
+                                        💬 أواجه مشكلة في هذا الطلب (مراسلة الإدارة)
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -132,89 +186,83 @@ include 'header.php';
                 <a href="index.php" class="btn btn-success mt-3 fw-bold">🏪 اذهب للمتجر الآن</a>
             </div>
         <?php endif; ?>
+</div>
+</div>
+<?php include 'footer.php'; ?>
+
+<!-- Modal تأكيد الاستلام والتقييم -->
+<div class="modal fade" id="receiveModal" tabindex="-1" aria-labelledby="receiveModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card" style="border: 1px solid rgba(16, 185, 129, 0.3);">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-success" id="receiveModalLabel">✅ تأكيد الاستلام وتقييم التوصيل</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST" action="my_orders.php">
+        <div class="modal-body py-4">
+          <input type="hidden" name="order_id" id="modal_order_id">
+          
+          <div class="text-center mb-4">
+            <label class="form-label d-block fw-bold fs-6 mb-2">كيف تقيم خدمة التوصيل والدلفري؟ ⭐</label>
+            <div class="star-rating d-flex justify-content-center gap-2">
+              <span class="fs-2 star-btn" data-value="1" style="cursor:pointer; color:#f59e0b; transition: transform 0.2s;">★</span>
+              <span class="fs-2 star-btn" data-value="2" style="cursor:pointer; color:#f59e0b; transition: transform 0.2s;">★</span>
+              <span class="fs-2 star-btn" data-value="3" style="cursor:pointer; color:#f59e0b; transition: transform 0.2s;">★</span>
+              <span class="fs-2 star-btn" data-value="4" style="cursor:pointer; color:#f59e0b; transition: transform 0.2s;">★</span>
+              <span class="fs-2 star-btn" data-value="5" style="cursor:pointer; color:#f59e0b; transition: transform 0.2s;">★</span>
+            </div>
+            <input type="hidden" name="rating" id="rating_input" value="5">
+          </div>
+
+          <div class="mb-3">
+            <label for="feedback" class="form-label fw-bold">ملاحظاتك حول التوصيل (اختياري)</label>
+            <textarea name="feedback" id="feedback" class="form-control" rows="3" placeholder="اكتب ملاحظة أو تعليق بخصوص السائق أو التوصيل..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">إلغاء</button>
+          <button type="submit" name="submit_received" class="btn btn-success fw-bold px-4">حفظ وإرسال التقييم ✅</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 
-
-
-<!-- تهيئة خرائط التتبع لطلبات كربلاء -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // إحداثيات المتجر الرئيسي الافتراضي في كربلاء
-    const storeLat = 32.6160;
-    const storeLng = 44.0249;
+    // تمرير رقم الطلب إلى المودال عند النقر
+    const receiveModal = document.getElementById('receiveModal');
+    if (receiveModal) {
+        receiveModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const orderId = button.getAttribute('data-order-id');
+            const modalOrderIdInput = receiveModal.querySelector('#modal_order_id');
+            modalOrderIdInput.value = orderId;
+        });
+    }
 
-    <?php foreach ($orders as $order): ?>
-        <?php if ($order['lat'] !== null && $order['lng'] !== null): ?>
-            (function() {
-                const mapId = 'map_<?php echo $order['id']; ?>';
-                const custLat = <?php echo floatval($order['lat']); ?>;
-                const custLng = <?php echo floatval($order['lng']); ?>;
-                const status = '<?php echo $order['status']; ?>';
-
-                // تهيئة الخريطة لكل فواتير الطلبات
-                const map = L.map(mapId, {
-                    zoomControl: false // إخفاء أزرار التحكم للتناسق مع الشاشات الصغيرة
-                }).setView([storeLat, storeLng], 13);
-                
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '© OpenStreetMap'
-                }).addTo(map);
-
-                // ماركر المتجر (هايبر ماركت رضا أبو لحمة) بأيقونة خضراء
-                const storeIcon = L.icon({
-                    iconUrl: 'https://cdn-icons-png.flaticon.com/512/869/869636.png', // أيقونة متجر
-                    iconSize: [28, 28],
-                    iconAnchor: [14, 14]
-                });
-                L.marker([storeLat, storeLng], {icon: storeIcon}).addTo(map)
-                    .bindPopup('🏫 هايبر ماركت رضا أبو لحمة (المركز الرئيسي)')
-                    .openPopup();
-
-                // ماركر موقع العميل
-                const homeIcon = L.icon({
-                    iconUrl: 'https://cdn-icons-png.flaticon.com/512/25/25694.png', // أيقونة منزل
-                    iconSize: [24, 24],
-                    iconAnchor: [12, 12]
-                });
-                L.marker([custLat, custLng], {icon: homeIcon}).addTo(map)
-                    .bindPopup('📍 موقع التوصيل المختار الخاص بك');
-
-                // رسم خط المسار المنقط باللون الأخضر المميز للمتجر
-                const pathLine = L.polyline([[storeLat, storeLng], [custLat, custLng]], {
-                    color: '#16a34a',
-                    weight: 3,
-                    dashArray: '5, 10'
-                }).addTo(map);
-
-                // تعديل نطاق الخريطة التلقائي ليناسب الماركرين
-                map.fitBounds(pathLine.getBounds(), { padding: [40, 40] });
-
-                // محاكاة سيارة توصيل متحركة على طول المسار فقط عند انتظار أو تحضير الطلب
-                if (status === 'pending' || status === 'processing') {
-                    const truckIcon = L.icon({
-                        iconUrl: 'https://cdn-icons-png.flaticon.com/512/754/754704.png', // شاحنة توصيل
-                        iconSize: [30, 30],
-                        iconAnchor: [15, 15]
-                    });
-                    
-                    const truckMarker = L.marker([storeLat, storeLng], { icon: truckIcon }).addTo(map);
-                    
-                    let progress = 0;
-                    setInterval(() => {
-                        progress += 0.005;
-                        if (progress > 1) {
-                            progress = 0; // إعادة التكرار من المتجر للبيت
-                        }
-                        const currentLat = storeLat + (custLat - storeLat) * progress;
-                        const currentLng = storeLng + (custLng - storeLng) * progress;
-                        truckMarker.setLatLng([currentLat, currentLng]);
-                    }, 80);
+    // إدارة اختيار النجوم التفاعلي
+    const starBtns = document.querySelectorAll('.star-btn');
+    const ratingInput = document.getElementById('rating_input');
+    
+    starBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const val = parseInt(this.getAttribute('data-value'));
+            ratingInput.value = val;
+            
+            // تلوين النجوم
+            starBtns.forEach(b => {
+                const bVal = parseInt(b.getAttribute('data-value'));
+                if (bVal <= val) {
+                    b.style.color = '#f59e0b';
+                    b.style.transform = 'scale(1.2)';
+                } else {
+                    b.style.color = 'rgba(255,255,255,0.15)';
+                    b.style.transform = 'scale(1)';
                 }
-            })();
-        <?php endif; ?>
-    <?php endforeach; ?>
+                setTimeout(() => { b.style.transform = 'scale(1)'; }, 150);
+            });
+        });
+    });
 });
 </script>
-<?php include 'footer.php'; ?>

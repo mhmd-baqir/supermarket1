@@ -19,39 +19,55 @@ $user = $stmt->fetch();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $full_name = trim($_POST['full_name'] ?? '');
-    $email     = trim($_POST['email'] ?? '');
     $phone     = trim($_POST['phone'] ?? '');
     $address   = trim($_POST['address'] ?? '');
     $password  = $_POST['password'] ?? '';
+    $avatar_name = $user['avatar']; // الافتراضي هو الملف الحالي
 
     if (empty($full_name)) {
         $error = 'الاسم الكامل حقل إلزامي.';
     } else {
         try {
-            $email_val = ($email === '') ? null : $email;
-            $email_exists = false;
-
-            if ($email_val !== null) {
-                // التحقق من تكرار البريد الإلكتروني لمستخدم آخر
-                $check_email = $pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
-                $check_email->execute([$email_val, $user_id]);
-                if ($check_email->fetch()) {
-                    $error = 'البريد الإلكتروني هذا مستخدم بالفعل من قبل حساب آخر.';
-                    $email_exists = true;
+            // معالجة رفع الصورة الشخصية
+            if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+                $fileTmpPath = $_FILES['avatar']['tmp_name'];
+                $fileName = $_FILES['avatar']['name'];
+                $fileSize = $_FILES['avatar']['size'];
+                $fileType = $_FILES['avatar']['type'];
+                $fileNameCmps = explode(".", $fileName);
+                $fileExtension = strtolower(end($fileNameCmps));
+                $allowedfileExtensions = array('jpg', 'gif', 'png', 'jpeg', 'webp');
+                
+                if (in_array($fileExtension, $allowedfileExtensions)) {
+                    // اسم فريد للملف
+                    $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
+                    $uploadFileDir = 'uploads/';
+                    if (!is_dir($uploadFileDir)) {
+                        mkdir($uploadFileDir, 0755, true);
+                    }
+                    $dest_path = $uploadFileDir . $newFileName;
+                    
+                    if (move_uploaded_file($fileTmpPath, $dest_path)) {
+                        $avatar_name = $newFileName;
+                    } else {
+                        $error = 'حدث خطأ أثناء حفظ ملف الصورة.';
+                    }
+                } else {
+                    $error = 'صيغة الصورة غير مدعومة. يرجى اختيار صورة بصيغة: JPG, JPEG, PNG, WEBP';
                 }
             }
 
-            if (!$email_exists) {
-                // تحديث البيانات الأساسية
+            if (empty($error)) {
+                // تحديث البيانات الأساسية في جدول المستخدمين
                 if (!empty($password)) {
                     // تحديث بكلمة مرور جديدة
                     $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-                    $update_stmt = $pdo->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, address = ?, password = ? WHERE id = ?");
-                    $update_stmt->execute([$full_name, $email_val, $phone, $address, $hashed_password, $user_id]);
+                    $update_stmt = $pdo->prepare("UPDATE users SET full_name = ?, phone = ?, address = ?, password = ?, avatar = ? WHERE id = ?");
+                    $update_stmt->execute([$full_name, $phone, $address, $hashed_password, $avatar_name, $user_id]);
                 } else {
                     // تحديث بدون تغيير كلمة المرور
-                    $update_stmt = $pdo->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, address = ? WHERE id = ?");
-                    $update_stmt->execute([$full_name, $email_val, $phone, $address, $user_id]);
+                    $update_stmt = $pdo->prepare("UPDATE users SET full_name = ?, phone = ?, address = ?, avatar = ? WHERE id = ?");
+                    $update_stmt->execute([$full_name, $phone, $address, $avatar_name, $user_id]);
                 }
 
                 $_SESSION['full_name'] = $full_name; // تحديث الاسم في الجلسة
@@ -99,28 +115,36 @@ include 'header.php';
         <?php endif; ?>
 
         <div class="checkout-card">
-            <form method="POST" action="my_account.php">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
-                        <input type="text" name="full_name" class="form-control" required value="<?php echo htmlspecialchars($user['full_name'] ?? ''); ?>">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">البريد الإلكتروني (اختياري)</label>
-                        <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>">
+            <form method="POST" action="my_account.php" enctype="multipart/form-data">
+                
+                <!-- عرض وتحميل الصورة الشخصية -->
+                <div class="mb-4 d-flex align-items-center gap-4 p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                    <img src="<?php echo (!empty($user['avatar']) && file_exists('uploads/' . $user['avatar'])) ? 'uploads/' . htmlspecialchars($user['avatar']) : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'; ?>" 
+                         alt="Avatar" class="rounded-circle shadow" style="width: 90px; height: 90px; object-fit: cover; border: 3px solid var(--primary);">
+                    <div>
+                        <label class="form-label fw-bold text-success">👤 الصورة الشخصية</label>
+                        <input type="file" name="avatar" class="form-control text-white" style="background: var(--input-bg);" accept="image/*">
+                        <small class="text-muted mt-1 d-block">الامتدادات المسموحة: JPG, PNG, JPEG, WEBP</small>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">رقم الهاتف</label>
-                        <input type="text" name="phone" class="form-control" value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>">
+                        <label class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
+                        <input type="text" name="full_name" class="form-control text-white" style="background:var(--input-bg);" required value="<?php echo htmlspecialchars($user['full_name'] ?? ''); ?>">
                     </div>
                     <div class="col-md-6 mb-3">
+                        <label class="form-label">رقم الهاتف</label>
+                        <input type="text" name="phone" class="form-control text-white" style="background:var(--input-bg);" value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12 mb-3">
                         <label class="form-label">اسم المستخدم (لا يمكن تغييره)</label>
                         <input type="text" class="form-control text-muted" disabled value="<?php echo htmlspecialchars($user['username']); ?>">
                     </div>
-                </div>
+                </div> 
 
                 <div class="mb-3">
                     <label class="form-label">عنوان التوصيل الافتراضي</label>

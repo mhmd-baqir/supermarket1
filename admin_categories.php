@@ -41,11 +41,12 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['add_category'])) {
     $name = trim($_POST['name'] ?? '');
     $desc = trim($_POST['description'] ?? '');
     $icon = trim($_POST['icon'] ?? '📁');
+    $admin_id = !empty($_POST['admin_id']) ? intval($_POST['admin_id']) : null;
     if (empty($name)) {
         $message='اسم القسم حقل إلزامي.'; $message_type='danger';
     } else {
         try {
-            $pdo->prepare("INSERT INTO categories (name,description) VALUES (?,?)")->execute(["$icon $name", $desc]);
+            $pdo->prepare("INSERT INTO categories (name,description,admin_id) VALUES (?,?,?)")->execute(["$icon $name", $desc, $admin_id]);
             $message="تم إضافة القسم '$icon $name' بنجاح."; $message_type='success';
         } catch (\PDOException $e) {
             $message="خطأ: ".htmlspecialchars($e->getMessage()); $message_type='danger';
@@ -58,11 +59,12 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['edit_category'])) {
     $id   = intval($_POST['cat_id']);
     $name = trim($_POST['name'] ?? '');
     $desc = trim($_POST['description'] ?? '');
+    $admin_id = !empty($_POST['admin_id']) ? intval($_POST['admin_id']) : null;
     if (empty($name) || $id<=0) {
         $message='البيانات غير صالحة.'; $message_type='danger';
     } else {
         try {
-            $pdo->prepare("UPDATE categories SET name=?,description=? WHERE id=?")->execute([$name,$desc,$id]);
+            $pdo->prepare("UPDATE categories SET name=?,description=?,admin_id=? WHERE id=?")->execute([$name,$desc,$admin_id,$id]);
             $message="تم تحديث القسم بنجاح."; $message_type='success';
         } catch (\PDOException $e) {
             $message="خطأ: ".htmlspecialchars($e->getMessage()); $message_type='danger';
@@ -93,10 +95,15 @@ if (isset($_GET['action']) && $_GET['action']==='edit' && isset($_GET['id'])) {
 
 // جلب الأقسام
 $categories = $pdo->query("
-    SELECT c.*, COUNT(p.id) AS products_count
-    FROM categories c LEFT JOIN products p ON c.id=p.category_id
+    SELECT c.*, COUNT(p.id) AS products_count, u.full_name as admin_full_name, u.username as admin_username
+    FROM categories c 
+    LEFT JOIN products p ON c.id=p.category_id
+    LEFT JOIN users u ON c.admin_id=u.id
     GROUP BY c.id ORDER BY c.id ASC
 ")->fetchAll();
+
+// جلب المسؤولين (المدراء)
+$admins = $pdo->query("SELECT id, username, full_name FROM users WHERE role='admin' ORDER BY full_name, username")->fetchAll();
 
 // تحديد الأقسام الافتراضية الناقصة
 $existing_names = array_column($categories, 'name');
@@ -169,6 +176,17 @@ include 'header.php';
             <input type="text" name="name" class="form-control" required value="<?= htmlspecialchars($edit_cat['name']) ?>">
           </div>
           <div class="mb-3">
+            <label class="form-label">المشرف المسؤول عن القسم</label>
+            <select name="admin_id" class="form-select text-white" style="background:var(--input-bg);">
+              <option value="">— عام / بدون مشرف مخصص —</option>
+              <?php foreach ($admins as $adm): ?>
+                <option value="<?= $adm['id'] ?>" <?= $edit_cat['admin_id']==$adm['id']?'selected':'' ?>>
+                  <?= htmlspecialchars($adm['full_name'] ?: $adm['username']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="mb-3">
             <label class="form-label">وصف القسم</label>
             <textarea name="description" class="form-control" rows="3"><?= htmlspecialchars($edit_cat['description']) ?></textarea>
           </div>
@@ -187,6 +205,17 @@ include 'header.php';
           <div class="mb-3">
             <label class="form-label">اسم القسم <span class="text-danger">*</span></label>
             <input type="text" name="name" class="form-control" required placeholder="مثال: البقالة">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">المشرف المسؤول عن القسم</label>
+            <select name="admin_id" class="form-select text-white" style="background:var(--input-bg);">
+              <option value="">— عام / بدون مشرف مخصص —</option>
+              <?php foreach ($admins as $adm): ?>
+                <option value="<?= $adm['id'] ?>">
+                  <?= htmlspecialchars($adm['full_name'] ?: $adm['username']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
           </div>
           <div class="mb-3">
             <label class="form-label">وصف القسم</label>
@@ -223,7 +252,7 @@ include 'header.php';
         <table class="table modern-table text-center align-middle mb-0">
           <thead>
             <tr>
-              <th>#</th><th class="text-start">القسم</th><th>الوصف</th>
+              <th>#</th><th class="text-start">القسم</th><th class="text-start">المشرف المسؤول</th><th>الوصف</th>
               <th>عدد المنتجات</th><th>الإجراءات</th>
             </tr>
           </thead>
@@ -232,6 +261,7 @@ include 'header.php';
               <tr>
                 <td class="fw-bold" style="color:var(--primary);"><?= $cat['id'] ?></td>
                 <td class="fw-bold text-start" style="color:var(--text-main);"><?= htmlspecialchars($cat['name']) ?></td>
+                <td class="fw-bold text-start text-success small"><?= htmlspecialchars($cat['admin_full_name'] ?: ($cat['admin_username'] ?: 'عام / غير مخصص')) ?></td>
                 <td class="text-start small" style="color:var(--text-muted);max-width:200px;">
                   <?= htmlspecialchars(mb_substr($cat['description'],0,60)) ?><?= mb_strlen($cat['description'])>60?'…':'' ?>
                 </td>
@@ -261,4 +291,4 @@ include 'header.php';
 </div>
 
 <!-- FOOTER -->
-include 'footer.php';
+<?php include 'footer.php'; ?>

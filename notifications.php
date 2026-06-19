@@ -90,4 +90,4 @@ $unread = array_filter($notifications, fn($n) => !$n['is_read']);
     <?php endif; ?>
 </div>
 
-include 'footer.php';
+<?php include 'footer.php'; ?>

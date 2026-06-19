@@ -7,7 +7,7 @@
       
       <!-- العمود الأول: من نحن -->
       <div class="col-lg-4 col-md-6">
-        <h5 class="fw-bold mb-3" style="color: var(--primary);">🥩 هايبر ماركت رضا أبو لحمة</h5>
+        <h5 class="fw-bold mb-3" style="color: var(--primary);">هايبر ماركت رضا أبو لحمة</h5>
         <p class="text-muted small lh-lg">
           وجهتكم الأولى للتسوق المتكامل في كربلاء المقدسة. نوفر لكم أجود أنواع اللحوم الطازجة والمشويات، الفواكه والخضروات، مشتقات الألبان، والمواد الغذائية والمنزلية بأعلى معايير الجودة وأفضل الأسعار.
         </p>
@@ -90,6 +90,14 @@
 .hover-primary:hover {
   color: var(--primary) !important;
   padding-right: 5px;
+}
+body.dark-mode footer .text-muted,
+body.dark-mode footer a.text-muted,
+body.dark-mode footer .text-muted a {
+  color: #ffffff !important;
+}
+body.dark-mode footer a.hover-primary:hover {
+  color: var(--primary) !important;
 }
 </style>
 

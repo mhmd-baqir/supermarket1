@@ -20,8 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($login_type === 'customer') {
         $phone = trim($_POST['phone'] ?? '');
-        if (empty($phone)) {
-            $error = 'يرجى إدخال رقم الهاتف للدخول السريع.';
+        $password = trim($_POST['password'] ?? '');
+        if (empty($phone) || empty($password)) {
+            $error = 'يرجى إدخال رقم الهاتف وكلمة المرور للدخول.';
         } else {
             try {
                 // جلب المستخدم ذو الدور 'customer' برقم الهاتف
@@ -29,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $stmt->execute([$phone, $phone]);
                 $user = $stmt->fetch();
 
-                if ($user) {
+                if ($user && password_verify($password, $user['password'])) {
                     $_SESSION['user_id']   = $user['id'];
                     $_SESSION['username']  = $user['username'];
                     $_SESSION['role']      = 'customer';
@@ -41,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     header("Location: $redirect");
                     exit;
                 } else {
-                    $error = 'رقم الهاتف هذا غير مسجل لدينا. يمكنك إنشاء حساب جديد مجاناً.';
+                    $error = 'رقم الهاتف أو كلمة المرور غير صحيحة، يرجى المحاولة مرة أخرى.';
                 }
             } catch (\PDOException $e) {
                 $error = 'حدث خطأ أثناء الاتصال بقاعدة البيانات: ' . htmlspecialchars($e->getMessage());
@@ -113,17 +114,25 @@ include 'header.php';
                 <div class="tab-pane fade <?php echo $active_tab === 'customer' ? 'show active' : ''; ?>" id="customer-form" role="tabpanel">
                     <form method="POST">
                         <input type="hidden" name="login_type" value="customer">
-                        <div class="mb-4">
+                        <div class="mb-3">
                             <label class="form-label fw-bold">📞 رقم الهاتف للزبون</label>
-                            <input type="text" name="phone" class="form-control form-control-lg" 
+                            <input type="text" name="phone" class="form-control form-control-lg text-white" style="background:var(--input-bg);"
                                    required placeholder="أدخل رقم هاتفك المسجل (مثال: 07XXXXXXXX)"
                                    value="<?php echo $active_tab === 'customer' && isset($phone) ? htmlspecialchars($phone) : ''; ?>">
-                            <small class="text-muted mt-2 d-block">💡 دخول فوري وسريع دون الحاجة لكلمة مرور أو رمز بريدي.</small>
+                        </div>
+                        <div class="mb-4 position-relative">
+                            <label class="form-label fw-bold">🔑 كلمة المرور</label>
+                            <input type="password" name="password" id="customer_password" class="form-control form-control-lg text-white" style="background:var(--input-bg);"
+                                   required placeholder="أدخل كلمة المرور الخاصة بك">
+                            <button type="button" onclick="toggleCustomerPassword()" 
+                                     style="position:absolute; left:12px; top:42px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem;">
+                                👁️
+                            </button>
                         </div>
                         
                         <button type="submit" class="btn btn-lg w-100 fw-bold mb-3"
                                 style="background: linear-gradient(135deg,#16a34a,#15803d); color:white; border:none; border-radius:14px; padding:14px;">
-                            🚀 دخول سريع للماركت
+                            🚀 تسجيل الدخول للماركت
                         </button>
                     </form>
                 </div>
@@ -175,6 +184,10 @@ include 'header.php';
 <script>
 function toggleAdminPassword() {
     const input = document.getElementById('admin_password');
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+function toggleCustomerPassword() {
+    const input = document.getElementById('customer_password');
     input.type = input.type === 'password' ? 'text' : 'password';
 }
 </script>

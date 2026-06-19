@@ -110,6 +110,7 @@ include 'header.php';
         <a href="admin_products.php"   class="btn btn-outline-success fw-bold btn-sm px-3">📦 المنتجات</a>
         <a href="admin_categories.php" class="btn btn-outline-success fw-bold btn-sm px-3">🏷️ الأقسام</a>
         <a href="admin_orders.php"     class="btn btn-success fw-bold btn-sm px-3" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));border:none;">🧾 الطلبات</a>
+        <a href="admin_support.php"    class="btn btn-outline-success fw-bold btn-sm px-3">💬 الرسائل والدعم</a>
         <a href="admin_users.php"      class="btn btn-outline-success fw-bold btn-sm px-3">👥 المستخدمين</a>
         <a href="logout.php"           class="btn btn-danger fw-bold btn-sm px-3">🚪 خروج</a>
       </div>
@@ -149,6 +150,25 @@ include 'header.php';
             <h6 class="fw-bold mb-3" style="color:var(--text-main);">📅 معلومات الطلب</h6>
             <p class="small mb-1" style="color:var(--text-muted);">التاريخ: <?= date('Y-m-d H:i', strtotime($view_order['created_at'])) ?></p>
             <p class="small mb-2" style="color:var(--text-muted);">المجموع: <strong style="color:var(--primary);"><?= number_format($view_order['total'],0) ?> د.ع</strong></p>
+            
+            <?php if ($view_order['customer_received'] == 1): ?>
+              <div class="p-2 rounded-2 mb-2" style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25);">
+                <div class="fw-bold small text-success">📢 أكد العميل الاستلام:</div>
+                <div class="small mt-1">التقييم: 
+                  <?php for ($i = 1; $i <= 5; $i++): ?>
+                    <span style="color: <?= $i <= $view_order['delivery_rating'] ? '#f59e0b' : 'rgba(255,255,255,0.15)' ?>;">★</span>
+                  <?php endfor; ?>
+                </div>
+                <?php if (!empty($view_order['delivery_feedback'])): ?>
+                  <div class="small text-muted mt-1">📝 ملاحظة: <?= htmlspecialchars($view_order['delivery_feedback']) ?></div>
+                <?php endif; ?>
+              </div>
+            <?php else: ?>
+              <div class="p-2 rounded-2 mb-2" style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2);">
+                <div class="fw-bold small text-warning">⏳ لم يؤكد العميل الاستلام بعد</div>
+              </div>
+            <?php endif; ?>
+
             <form method="POST" action="admin_orders.php?id=<?= $view_order['id'] ?>" class="d-flex gap-2 mt-2">
               <input type="hidden" name="order_id" value="<?= $view_order['id'] ?>">
               <select name="status" class="form-select form-select-sm" required>
@@ -382,4 +402,4 @@ include 'header.php';
 </div>
 
 <!-- FOOTER -->
-include 'footer.php';
+<?php include 'footer.php'; ?>

@@ -360,13 +360,6 @@ include 'header.php';
     </div>
 </div>
 
-<!-- FOOTER -->
-<footer class="main-footer mt-5">
-    <p class="mb-0">© 2024 هايبر ماركت رضا أبو لحمة — جميع الحقوق محفوظة | PR122-3</p>
-</footer>
-
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 function previewImage(inputId, previewId) {
     const url = document.getElementById(inputId).value.trim();
@@ -389,5 +382,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (editUrl) previewImage('editImgUrl','editImgPreview');
 });
 </script>
-</body>
-</html>
+<?php include 'footer.php'; ?>

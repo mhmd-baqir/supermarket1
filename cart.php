@@ -114,26 +114,26 @@ include 'header.php';
                                              style="object-fit:cover; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);"
                                              onerror="this.src='https://placehold.co/55x55/1e293b/4ade80?text=📦'">
                                         <div>
-                                            <div style="color: #f1f5f9; font-weight: 700; font-size: 0.95rem;">
+                                            <div style="color: var(--text-main); font-weight: 700; font-size: 0.95rem;">
                                                 <?php echo htmlspecialchars($prod['name']); ?>
                                             </div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="text-center" style="color: #94a3b8;">
+                                <td class="text-center" style="color: var(--text-muted);">
                                     <?php echo number_format($prod['price'], 0); ?> د.ع / <?php echo htmlspecialchars($prod['unit']); ?>
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex align-items-center justify-content-center gap-2">
                                         <a href="cart.php?action=decrease&id=<?php echo $prod['id']; ?>" 
                                            class="btn btn-sm" 
-                                           style="background: rgba(255,255,255,0.08); color: #cbd5e1; border-radius: 8px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-weight:700;">−</a>
+                                           style="background: rgba(255,255,255,0.08); color: var(--text-main); border-radius: 8px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-weight:700;">−</a>
                                         <span style="background: rgba(22,163,74,0.2); color: #4ade80; padding: 4px 14px; border-radius: 8px; font-weight: 700; font-size: 0.95rem;">
                                             <?php echo $qty; ?> <?php echo htmlspecialchars($prod['unit']); ?>
                                         </span>
                                         <a href="cart.php?action=increase&id=<?php echo $prod['id']; ?>" 
                                            class="btn btn-sm" 
-                                           style="background: rgba(255,255,255,0.08); color: #cbd5e1; border-radius: 8px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-weight:700;">+</a>
+                                           style="background: rgba(255,255,255,0.08); color: var(--text-main); border-radius: 8px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-weight:700;">+</a>
                                     </div>
                                 </td>
                                 <td class="text-center fw-bold" style="color: #4ade80;">
@@ -156,15 +156,15 @@ include 'header.php';
         <!-- ملخص الطلب -->
         <div class="col-lg-4 fade-in-up delay-2">
             <div class="glass-card p-4 sticky-top" style="top: 90px;">
-                <h5 class="fw-bold mb-4" style="color: #f1f5f9;">📊 ملخص الطلب</h5>
+                <h5 class="fw-bold mb-4" style="color: var(--text-main);">📊 ملخص الطلب</h5>
 
                 <div class="d-flex justify-content-between mb-3 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.08);">
-                    <span style="color: #94a3b8;">عدد الأصناف</span>
-                    <span style="color: #f1f5f9; font-weight: 700;"><?php echo count($_SESSION['cart']); ?> صنف</span>
+                    <span style="color: var(--text-muted);">عدد الأصناف</span>
+                    <span style="color: var(--text-main); font-weight: 700;"><?php echo count($_SESSION['cart']); ?> صنف</span>
                 </div>
                 <div class="d-flex justify-content-between mb-3 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.08);">
-                    <span style="color: #94a3b8;">إجمالي القطع</span>
-                    <span style="color: #f1f5f9; font-weight: 700;"><?php echo array_sum($_SESSION['cart']); ?> قطعة</span>
+                    <span style="color: var(--text-muted);">إجمالي القطع</span>
+                    <span style="color: var(--text-main); font-weight: 700;"><?php echo array_sum($_SESSION['cart']); ?> قطعة</span>
                 </div>
                 <div class="d-flex justify-content-between mb-4 py-3 px-3" 
                      style="background: rgba(22,163,74,0.1); border-radius: 12px; border: 1px solid rgba(22,163,74,0.2);">
@@ -180,7 +180,7 @@ include 'header.php';
                     💳 إتمام الشراء
                 </a>
                 <a href="index.php" class="btn w-100 mt-2" 
-                   style="background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); border-radius:14px;">
+                   style="background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); border-radius:14px;">
                     ← مواصلة التسوق
                 </a>
             </div>
@@ -201,4 +201,4 @@ include 'header.php';
 <?php endif; ?>
 
 <!-- FOOTER -->
-include 'footer.php';
+<?php include 'footer.php'; ?>

@@ -7,7 +7,7 @@
     <title>هايبر ماركت رضا أبو لحمة</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <!-- Leaflet.js Maps Library -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -23,8 +23,8 @@
 
             /* Base Theme (Default Light Mode - Clean White & Vibrant Green) */
             --bg-body: linear-gradient(135deg, #f8fafc 0%, #f0fdf4 50%, #f8fafc 100%);
-            --text-main: #0f172a;
-            --text-muted: #64748b;
+            --text-main: #0c111d;
+            --text-muted: #2d3748;
             --navbar-bg: rgba(255, 255, 255, 0.92);
             --navbar-border: rgba(16, 185, 129, 0.15);
             --card-bg: rgba(255, 255, 255, 0.85);
@@ -51,9 +51,9 @@
 
         /* Dark Mode Overrides (Deep Slate Blue & Vibrant Mint) */
         body.dark-mode {
-            --bg-body: linear-gradient(135deg, #0b0f19 0%, #0f172a 50%, #0b0f19 100%);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --bg-body: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #090d16 100%);
+            --text-main: #ffffff;
+            --text-muted: #cbd5e1;
             --navbar-bg: rgba(15, 23, 42, 0.95);
             --navbar-border: rgba(16, 185, 129, 0.3);
             --card-bg: rgba(30, 41, 59, 0.85);
@@ -76,6 +76,23 @@
             --scrollbar-thumb: #10b981;
             --toast-bg: rgba(15, 23, 42, 0.95);
             --toast-text: #f8fafc;
+            /* Bootstrap 5.3 overrides */
+            --bs-secondary-color: #ffffff;
+            --bs-body-color: #ffffff;
+        }
+
+        /* Dark mode: override Bootstrap text-muted to pure white */
+        body.dark-mode .text-muted,
+        body.dark-mode .text-muted *,
+        body.dark-mode p.text-muted,
+        body.dark-mode small.text-muted,
+        body.dark-mode span.text-muted,
+        body.dark-mode li.text-muted,
+        body.dark-mode ul.text-muted,
+        body.dark-mode [class*="text-muted"] {
+            color: #ffffff !important;
+            --bs-secondary-color: #ffffff !important;
+            opacity: 1 !important;
         }
 
         * { font-family: 'Cairo', sans-serif; }
@@ -84,6 +101,8 @@
             background: var(--bg-body) !important;
             min-height: 100vh;
             color: var(--text-main) !important;
+            font-weight: 500;
+            line-height: 1.6;
             transition: background 0.3s, color 0.3s;
         }
 
@@ -114,6 +133,7 @@
         .nav-link {
             color: var(--text-muted) !important;
             font-weight: 600;
+            font-size: 0.95rem;
             transition: color 0.3s;
             position: relative;
         }
@@ -371,6 +391,9 @@
             border-radius: 16px;
             overflow: hidden;
             box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 100px;
+            z-index: 10;
         }
 
         .sidebar-title {
@@ -424,6 +447,7 @@
         }
 
         .modern-table td {
+            background: transparent !important;
             border: none;
             padding: 14px 16px;
             vertical-align: middle;
@@ -711,7 +735,7 @@
 <nav class="navbar navbar-expand-lg">
   <div class="container">
     <a class="navbar-brand" href="index.php">
-      🥩 رضا<span> أبو لحمة</span>
+      رضا<span> أبو لحمة</span>
     </a>
     <button class="navbar-toggler border-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
@@ -721,9 +745,6 @@
         <li class="nav-item">
             <a class="nav-link" href="index.php">🏠 الرئيسية</a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" href="about.php">ℹ️ من نحن</a>
-        </li>
         <?php if(isset($_SESSION['role']) && $_SESSION['role'] === 'customer'): ?>
             <li class="nav-item">
                 <a class="nav-link" href="wishlist.php">❤️ المفضلة</a>
@@ -732,6 +753,9 @@
                 <a class="nav-link" href="my_orders.php">📦 طلباتي</a>
             </li>
         <?php endif; ?>
+        <li class="nav-item">
+            <a class="nav-link" href="about.php">ℹ️ من نحن</a>
+        </li>
       </ul>
       <div class="d-flex align-items-center gap-2">
         <?php
@@ -777,6 +801,7 @@
                     <li><a class="dropdown-item fw-bold" href="my_account.php">⚙️ ملفي الشخصي</a></li>
                     <li><a class="dropdown-item fw-bold" href="my_orders.php">📦 تتبع طلباتي</a></li>
                     <li><a class="dropdown-item fw-bold" href="wishlist.php">❤️ المفضلة</a></li>
+                    <li><a class="dropdown-item fw-bold" href="support.php">💬 الدعم والمراسلة</a></li>
                     <li><hr class="dropdown-divider" style="border-color: rgba(22, 163, 74, 0.2);"></li>
                     <li><a class="dropdown-item fw-bold text-danger" href="logout.php">🚪 تسجيل الخروج</a></li>
                 </ul>
@@ -865,4 +890,75 @@ function toggleDarkMode() {
         if (icon) icon.textContent = '☀️';
     }
 })();
+
+// ===== جافاسكريبت مستقل (Vanilla JS Fallback) للقوائم المنسدلة والنوافذ المنبثقة =====
+document.addEventListener("DOMContentLoaded", function() {
+    // التحقق مما إذا كانت مكتبة Bootstrap JS محملة لتفادي التداخل البرمجي
+    if (typeof bootstrap !== 'undefined') {
+        return;
+    }
+
+    // 1. فتح القوائم المنسدلة (Dropdowns) عند النقر يدوياً
+    const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+    dropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const parent = this.parentElement;
+            const menu = parent.querySelector('.dropdown-menu');
+            if (menu) {
+                const isOpen = menu.classList.contains('show');
+                // إغلاق أي قائمة مفتوحة أخرى
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+                document.querySelectorAll('.dropdown-toggle').forEach(t => t.setAttribute('aria-expanded', 'false'));
+                
+                if (!isOpen) {
+                    menu.classList.add('show');
+                    this.setAttribute('aria-expanded', 'true');
+                }
+            }
+        });
+    });
+    
+    // إغلاق القوائم المنسدلة عند النقر خارجها
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+        document.querySelectorAll('.dropdown-toggle').forEach(t => t.setAttribute('aria-expanded', 'false'));
+    });
+
+    // 2. تفعيل فتح النوافذ المنبثقة (Modals) يدوياً عند تعذر تحميل Bootstrap JS
+    const modalTriggers = document.querySelectorAll('[data-bs-toggle="modal"]');
+    modalTriggers.forEach(trigger => {
+        trigger.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-bs-target');
+            const modal = document.querySelector(targetId);
+            if (modal) {
+                modal.classList.add('show');
+                modal.style.display = 'block';
+                modal.style.background = 'rgba(0,0,0,0.5)';
+                
+                // تمرير رقم الطلب للمودال إن وجد
+                const orderId = this.getAttribute('data-order-id');
+                if (orderId) {
+                    const orderInput = modal.querySelector('#modal_order_id');
+                    if (orderInput) orderInput.value = orderId;
+                }
+            }
+        });
+    });
+
+    // إغلاق النوافذ المنبثقة عند النقر على أزرار الإغلاق
+    const modalCloseBtns = document.querySelectorAll('[data-bs-dismiss="modal"], .btn-close');
+    modalCloseBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.classList.remove('show');
+                modal.style.display = 'none';
+            }
+        });
+    });
+});
 </script>
