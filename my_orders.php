@@ -135,14 +135,7 @@ include 'header.php';
     </div>
 </div>
 
-<!-- FOOTER -->
-<footer class="main-footer mt-5">
-    <p class="mb-0">© 2024 الهايبر ماركت المتكامل — جميع الحقوق محفوظة | PR122-3</p>
-</footer>
 
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- تهيئة خرائط التتبع لطلبات كربلاء -->
 <script>
@@ -169,14 +162,14 @@ document.addEventListener("DOMContentLoaded", function() {
                     attribution: '© OpenStreetMap'
                 }).addTo(map);
 
-                // ماركر المتجر (الهايبرماركت) بأيقونة خضراء
+                // ماركر المتجر (هايبر ماركت رضا أبو لحمة) بأيقونة خضراء
                 const storeIcon = L.icon({
                     iconUrl: 'https://cdn-icons-png.flaticon.com/512/869/869636.png', // أيقونة متجر
                     iconSize: [28, 28],
                     iconAnchor: [14, 14]
                 });
                 L.marker([storeLat, storeLng], {icon: storeIcon}).addTo(map)
-                    .bindPopup('🏫 الهايبرماركت المتكامل (المركز الرئيسي)')
+                    .bindPopup('🏫 هايبر ماركت رضا أبو لحمة (المركز الرئيسي)')
                     .openPopup();
 
                 // ماركر موقع العميل
@@ -224,5 +217,4 @@ document.addEventListener("DOMContentLoaded", function() {
     <?php endforeach; ?>
 });
 </script>
-</body>
-</html>
+<?php include 'footer.php'; ?>

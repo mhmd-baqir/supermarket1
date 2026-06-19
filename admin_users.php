@@ -161,11 +161,4 @@ include 'header.php';
 </div>
 
 <!-- FOOTER -->
-<footer class="main-footer mt-5">
-    <p class="mb-0">© 2024 الهايبر ماركت المتكامل — جميع الحقوق محفوظة | PR122-3</p>
-</footer>
-
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+include 'footer.php';

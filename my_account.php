@@ -24,26 +24,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address   = trim($_POST['address'] ?? '');
     $password  = $_POST['password'] ?? '';
 
-    if (empty($full_name) || empty($email)) {
-        $error = 'الاسم الكامل والبريد الإلكتروني حقول إلزامية.';
+    if (empty($full_name)) {
+        $error = 'الاسم الكامل حقل إلزامي.';
     } else {
         try {
-            // التحقق من تكرار البريد الإلكتروني لمستخدم آخر
-            $check_email = $pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
-            $check_email->execute([$email, $user_id]);
-            if ($check_email->fetch()) {
-                $error = 'البريد الإلكتروني هذا مستخدم بالفعل من قبل حساب آخر.';
-            } else {
+            $email_val = ($email === '') ? null : $email;
+            $email_exists = false;
+
+            if ($email_val !== null) {
+                // التحقق من تكرار البريد الإلكتروني لمستخدم آخر
+                $check_email = $pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+                $check_email->execute([$email_val, $user_id]);
+                if ($check_email->fetch()) {
+                    $error = 'البريد الإلكتروني هذا مستخدم بالفعل من قبل حساب آخر.';
+                    $email_exists = true;
+                }
+            }
+
+            if (!$email_exists) {
                 // تحديث البيانات الأساسية
                 if (!empty($password)) {
                     // تحديث بكلمة مرور جديدة
                     $hashed_password = password_hash($password, PASSWORD_BCRYPT);
                     $update_stmt = $pdo->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, address = ?, password = ? WHERE id = ?");
-                    $update_stmt->execute([$full_name, $email, $phone, $address, $hashed_password, $user_id]);
+                    $update_stmt->execute([$full_name, $email_val, $phone, $address, $hashed_password, $user_id]);
                 } else {
                     // تحديث بدون تغيير كلمة المرور
                     $update_stmt = $pdo->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, address = ? WHERE id = ?");
-                    $update_stmt->execute([$full_name, $email, $phone, $address, $user_id]);
+                    $update_stmt->execute([$full_name, $email_val, $phone, $address, $user_id]);
                 }
 
                 $_SESSION['full_name'] = $full_name; // تحديث الاسم في الجلسة
@@ -98,8 +106,8 @@ include 'header.php';
                         <input type="text" name="full_name" class="form-control" required value="<?php echo htmlspecialchars($user['full_name'] ?? ''); ?>">
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
-                        <input type="email" name="email" class="form-control" required value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>">
+                        <label class="form-label">البريد الإلكتروني (اختياري)</label>
+                        <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>">
                     </div>
                 </div>
 
@@ -133,6 +141,5 @@ include 'header.php';
 </div>
 
 <?php
-echo '</div><footer class="main-footer mt-5"><p class="mb-0">© 2024 الهايبر ماركت المتكامل — جميع الحقوق محفوظة | PR122-3</p></footer></div>';
-echo '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script></body></html>';
+include 'footer.php';
 ?>

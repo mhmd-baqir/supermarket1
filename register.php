@@ -12,45 +12,39 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username  = trim($_POST['username'] ?? '');
-    $password  = $_POST['password'] ?? '';
-    $full_name = trim($_POST['full_name'] ?? '');
-    $email     = trim($_POST['email'] ?? '');
     $phone     = trim($_POST['phone'] ?? '');
+    $full_name = trim($_POST['full_name'] ?? '');
     $address   = trim($_POST['address'] ?? '');
+    
+    // كلمة المرور هي رقم الهاتف لتوافق النظام
+    $password  = $phone;
 
-    if (empty($username) || empty($password) || empty($full_name) || empty($email)) {
-        $error = 'يرجى ملء جميع الحقول الإلزامية (اسم المستخدم، كلمة المرور، الاسم الكامل، البريد الإلكتروني).';
+    if (empty($phone) || empty($full_name)) {
+        $error = 'يرجى ملء جميع الحقول الإلزامية (رقم الهاتف، الاسم الكامل).';
     } else {
         try {
-            // التحقق من تكرار اسم المستخدم
-            $check_user = $pdo->prepare("SELECT id FROM users WHERE username = ?");
-            $check_user->execute([$username]);
+            // التحقق من تكرار رقم الهاتف
+            $check_user = $pdo->prepare("SELECT id FROM users WHERE username = ? OR phone = ?");
+            $check_user->execute([$phone, $phone]);
             if ($check_user->fetch()) {
-                $error = 'اسم المستخدم هذا مستخدم بالفعل، يرجى اختيار اسم آخر.';
+                $error = 'رقم الهاتف هذا مسجل بالفعل، يرجى تسجيل الدخول أو استخدام رقم آخر.';
             } else {
-                // التحقق من تكرار البريد الإلكتروني
-                $check_email = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-                $check_email->execute([$email]);
-                if ($check_email->fetch()) {
-                    $error = 'البريد الإلكتروني هذا مسجل بالفعل.';
-                } else {
-                    // تشفير كلمة المرور وإدخال المستخدم الجديد
-                    $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-                    $stmt = $pdo->prepare("INSERT INTO users (username, password, full_name, email, phone, address, role) VALUES (?, ?, ?, ?, ?, ?, 'customer')");
-                    $stmt->execute([$username, $hashed_password, $full_name, $email, $phone, $address]);
+                // تشفير كلمة المرور وإدخال المستخدم الجديد
+                $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+                // نسجل الهاتف في خانتي username و phone لتوافق النظام
+                $stmt = $pdo->prepare("INSERT INTO users (username, password, full_name, email, phone, address, role) VALUES (?, ?, ?, NULL, ?, ?, 'customer')");
+                $stmt->execute([$phone, $hashed_password, $full_name, $phone, $address]);
 
-                    $new_user_id = $pdo->lastInsertId();
+                $new_user_id = $pdo->lastInsertId();
 
-                    // تسجيل الدخول التلقائي
-                    $_SESSION['user_id'] = $new_user_id;
-                    $_SESSION['username'] = $username;
-                    $_SESSION['role'] = 'customer';
-                    $_SESSION['full_name'] = $full_name;
+                // تسجيل الدخول التلقائي
+                $_SESSION['user_id'] = $new_user_id;
+                $_SESSION['username'] = $phone;
+                $_SESSION['role'] = 'customer';
+                $_SESSION['full_name'] = $full_name;
 
-                    header('Location: index.php');
-                    exit;
-                }
+                header('Location: index.php');
+                exit;
             }
         } catch (\PDOException $e) {
             $error = 'حدث خطأ أثناء التسجيل: ' . htmlspecialchars($e->getMessage());
@@ -70,23 +64,16 @@ include 'header.php';
 
             <?php if ($error): ?>
                 <div class="alert-modern alert-danger-modern mb-3">
-                    ⚠️ <?php echo $error; ?>
+                     <?php echo $error; ?>
                 </div>
             <?php endif; ?>
 
             <form method="POST" action="register.php">
                 <!-- الحقول الأساسية -->
                 <div class="mb-3">
-                    <label class="form-label">اسم المستخدم (للتسجيل) <span class="text-danger">*</span></label>
-                    <input type="text" name="username" class="form-control" placeholder="مثال: ahmed99" required value="<?php echo isset($username) ? htmlspecialchars($username) : ''; ?>">
+                    <label class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
+                    <input type="text" name="phone" class="form-control" placeholder="07XXXXXXXX" required value="<?php echo isset($phone) ? htmlspecialchars($phone) : ''; ?>">
                 </div>
-
-                <div class="mb-3">
-                    <label class="form-label">كلمة المرور <span class="text-danger">*</span></label>
-                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
-                </div>
-
-                <hr class="border-secondary my-3">
 
                 <!-- البيانات الشخصية -->
                 <div class="mb-3">
@@ -95,21 +82,11 @@ include 'header.php';
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
-                    <input type="email" name="email" class="form-control" placeholder="example@mail.com" required value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>">
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">رقم الهاتف</label>
-                    <input type="text" name="phone" class="form-control" placeholder="07XXXXXXXX" value="<?php echo isset($phone) ? htmlspecialchars($phone) : ''; ?>">
-                </div>
-
-                <div class="mb-3">
                     <label class="form-label">العنوان الافتراضي للتوصيل</label>
-                    <textarea name="address" class="form-control" rows="2" placeholder="المدينة، المنطقة، اسم الشارع، معلم دال..."><?php echo isset($address) ? htmlspecialchars($address) : ''; ?></textarea>
+                    <textarea name="address" class="form-control" rows="2" placeholder="المدينة، المنطقة، حي الحسين، اسم الشارع، معلم دال..."><?php echo isset($address) ? htmlspecialchars($address) : ''; ?></textarea>
                 </div>
 
-                <button type="submit" class="btn btn-success w-100 fw-bold py-2 mb-3" style="background: linear-gradient(135deg, #16a34a, #15803d); border: none;">
+                <button type="submit" class="btn btn-success w-100 fw-bold py-2 mb-3" style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border: none;">
                     🚀 إكمال التسجيل
                 </button>
             </form>
@@ -122,9 +99,6 @@ include 'header.php';
     </div>
 </div>
 
-<?php include 'header.php'; // سيتم إغلاقه عبر الفوتر ولكن لا بأس بالـ HTML والفوتر الملحق بالملف الرئيسي ?>
 <?php
-// تضمين الفوتر في PHP
-echo '</div><footer class="main-footer mt-5"><p class="mb-0">© 2024 الهايبر ماركت المتكامل — جميع الحقوق محفوظة | PR122-3</p></footer></div>';
-echo '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script></body></html>';
+include 'footer.php';
 ?>

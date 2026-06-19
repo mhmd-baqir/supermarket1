@@ -45,7 +45,7 @@ $products = $prod_stmt->fetchAll();
   </div>
   <div class="carousel-inner">
     <!-- Slide 1 -->
-    <div class="carousel-item active" style="height: 320px; background: linear-gradient(rgba(15,23,42,0.5), rgba(15,23,42,0.85)), url('https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&auto=format&fit=crop&q=80') center/cover;">
+    <div class="carousel-item active" style="height: 320px; background: linear-gradient(rgba(10,40,20,0.45), rgba(10,40,20,0.75)), url('https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&auto=format&fit=crop&q=80') center/cover;">
       <div class="carousel-caption d-flex flex-column h-100 align-items-center justify-content-center" style="bottom: 0;">
         <h2 class="fw-black text-success" style="font-weight: 900; text-shadow: 0 4px 10px rgba(0,0,0,0.8); font-size: 2.2rem;">🍏 الأغذية الطازجة يومياً</h2>
         <p class="text-white small mb-3" style="text-shadow: 0 2px 5px rgba(0,0,0,0.8); font-size: 1rem;">خضروات وفواكه ولحوم طازجة تصلك بأعلى جودة وأفضل سعر</p>
@@ -53,7 +53,7 @@ $products = $prod_stmt->fetchAll();
       </div>
     </div>
     <!-- Slide 2 -->
-    <div class="carousel-item" style="height: 320px; background: linear-gradient(rgba(15,23,42,0.5), rgba(15,23,42,0.85)), url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&auto=format&fit=crop&q=80') center/cover;">
+    <div class="carousel-item" style="height: 320px; background: linear-gradient(rgba(10,40,20,0.45), rgba(10,40,20,0.75)), url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&auto=format&fit=crop&q=80') center/cover;">
       <div class="carousel-caption d-flex flex-column h-100 align-items-center justify-content-center" style="bottom: 0;">
         <h2 class="fw-black text-warning" style="font-weight: 900; text-shadow: 0 4px 10px rgba(0,0,0,0.8); font-size: 2.2rem;">⚡ أحدث الأجهزة الإلكترونية</h2>
         <p class="text-white small mb-3" style="text-shadow: 0 2px 5px rgba(0,0,0,0.8); font-size: 1rem;">هواتف شواحن وسماعات من ماركات عالمية بضمان حقيقي</p>
@@ -61,7 +61,7 @@ $products = $prod_stmt->fetchAll();
       </div>
     </div>
     <!-- Slide 3 -->
-    <div class="carousel-item" style="height: 320px; background: linear-gradient(rgba(15,23,42,0.5), rgba(15,23,42,0.85)), url('https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=1200&auto=format&fit=crop&q=80') center/cover;">
+    <div class="carousel-item" style="height: 320px; background: linear-gradient(rgba(10,40,20,0.45), rgba(10,40,20,0.75)), url('https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=1200&auto=format&fit=crop&q=80') center/cover;">
       <div class="carousel-caption d-flex flex-column h-100 align-items-center justify-content-center" style="bottom: 0;">
         <h2 class="fw-black text-success" style="font-weight: 900; text-shadow: 0 4px 10px rgba(0,0,0,0.8); font-size: 2.2rem;">🧼 منظفات وعناية بالمنزل</h2>
         <p class="text-white small mb-3" style="text-shadow: 0 2px 5px rgba(0,0,0,0.8); font-size: 1rem;">كل ما يحتاجه منزلك للبقاء نظيفاً ومعقماً بأقل التكاليف</p>
@@ -139,20 +139,20 @@ $products = $prod_stmt->fetchAll();
                                      class="card-img-top w-100" 
                                      alt="<?php echo htmlspecialchars($product['name']); ?>"
                                      style="height: 190px; object-fit: cover;"
-                                     onerror="this.src='https://placehold.co/400x200/1e293b/4ade80?text=منتج'">
+                                     onerror="this.src='https://placehold.co/400x200/d1fae5/059669?text=\u0645\u0646\u062a\u062c'">
                                 
                                 <!-- زر المفضلة العائم -->
                                 <?php if ($is_customer): ?>
                                     <a href="wishlist.php?action=<?php echo $product['in_wishlist'] ? 'remove' : 'add'; ?>&id=<?php echo $product['id']; ?>" 
                                        class="btn btn-sm position-absolute top-0 start-0 m-2 rounded-circle shadow"
-                                       style="background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.1); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; z-index: 5;"
+                                       style="background: rgba(255,255,255,0.85); border: 1px solid rgba(16,185,129,0.2); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; z-index: 5;"
                                        title="<?php echo $product['in_wishlist'] ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'; ?>">
                                         <?php echo $product['in_wishlist'] ? '❤️' : '🤍'; ?>
                                     </a>
                                 <?php else: ?>
                                     <a href="login.php" 
                                        class="btn btn-sm position-absolute top-0 start-0 m-2 rounded-circle shadow"
-                                       style="background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.1); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; z-index: 5;"
+                                       style="background: rgba(255,255,255,0.85); border: 1px solid rgba(16,185,129,0.2); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; z-index: 5;"
                                        title="سجل دخول لحفظ المفضلة">
                                         🤍
                                     </a>
@@ -207,11 +207,4 @@ $products = $prod_stmt->fetchAll();
 </div>
 
 <!-- FOOTER -->
-<footer class="main-footer mt-5">
-    <p class="mb-0">© 2024 الهايبر ماركت المتكامل — جميع الحقوق محفوظة | PR122-3</p>
-</footer>
-
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+include 'footer.php';

@@ -128,14 +128,14 @@ include 'header.php';
 <div class="row mb-4 fade-in-up">
     <div class="col-12">
         <div class="glass-card p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <h4 class="fw-bold text-success m-0">⚙️ إدارة منتجات المتجر</h4>
+            <h4 class="fw-bold m-0" style="color:var(--primary);">⚙️ إدارة منتجات المتجر</h4>
             <div class="d-flex flex-wrap gap-2">
-                <a href="admin_dashboard.php" class="btn btn-outline-success fw-bold btn-sm px-3">📊 الرئيسية</a>
-                <a href="admin_products.php" class="btn btn-success fw-bold btn-sm active px-3">📦 المنتجات</a>
+                <a href="admin_dashboard.php"  class="btn btn-outline-success fw-bold btn-sm px-3">📊 الرئيسية</a>
+                <a href="admin_products.php"   class="btn btn-success fw-bold btn-sm active px-3" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));border:none;">📦 المنتجات</a>
                 <a href="admin_categories.php" class="btn btn-outline-success fw-bold btn-sm px-3">🏷️ الأقسام</a>
-                <a href="admin_orders.php" class="btn btn-outline-success fw-bold btn-sm px-3">🧾 الطلبات</a>
-                <a href="admin_users.php" class="btn btn-outline-success fw-bold btn-sm px-3">👥 المستخدمين</a>
-                <a href="logout.php" class="btn btn-danger fw-bold btn-sm px-3">🚪 خروج</a>
+                <a href="admin_orders.php"     class="btn btn-outline-success fw-bold btn-sm px-3">🧾 الطلبات</a>
+                <a href="admin_users.php"      class="btn btn-outline-success fw-bold btn-sm px-3">👥 المستخدمين</a>
+                <a href="logout.php"           class="btn btn-danger fw-bold btn-sm px-3">🚪 خروج</a>
             </div>
         </div>
     </div>
@@ -195,7 +195,13 @@ include 'header.php';
                     </div>
                     <div class="mb-3">
                         <label class="form-label">رابط صورة خارجية من الإنترنت</label>
-                        <input type="text" name="edit_image_url" class="form-control" placeholder="https://example.com/image.jpg" value="<?php echo (strpos($edit_product['image'], 'http') === 0) ? htmlspecialchars($edit_product['image']) : ''; ?>">
+                        <input type="text" name="edit_image_url" id="editImgUrl" class="form-control"
+                               placeholder="https://example.com/image.jpg"
+                               value="<?php echo (strpos($edit_product['image'], 'http') === 0) ? htmlspecialchars($edit_product['image']) : ''; ?>"
+                               oninput="previewImage('editImgUrl','editImgPreview')">
+                        <img id="editImgPreview"
+                             src="<?php echo (strpos($edit_product['image'],'http')===0) ? htmlspecialchars($edit_product['image']) : 'uploads/'.htmlspecialchars($edit_product['image']); ?>"
+                             alt="" style="width:100%;height:100px;object-fit:cover;border-radius:8px;margin-top:8px;border:1px solid var(--card-border);">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">أو ارفع ملف صورة محلي</label>
@@ -251,7 +257,10 @@ include 'header.php';
                     </div>
                     <div class="mb-3">
                         <label class="form-label">رابط صورة من الإنترنت (توصية)</label>
-                        <input type="text" name="image_url" class="form-control" placeholder="https://example.com/image.jpg">
+                        <input type="text" name="image_url" id="addImgUrl" class="form-control"
+                               placeholder="https://example.com/image.jpg"
+                               oninput="previewImage('addImgUrl','addImgPreview')">
+                        <img id="addImgPreview" src="" alt="" style="display:none;width:100%;height:100px;object-fit:cover;border-radius:8px;margin-top:8px;border:1px solid var(--card-border);">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">أو ارفع صورة محلياً</label>
@@ -272,16 +281,17 @@ include 'header.php';
     <!-- جدول المنتجات -->
     <div class="col-md-8 fade-in-up delay-2">
         <div class="glass-card overflow-hidden">
-            <div class="p-4" style="border-bottom: 1px solid rgba(255,255,255,0.06);">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold m-0 text-white">📋 قائمة المنتجات الحالية</h5>
-                    <span style="background: rgba(22,163,74,0.2); color:#4ade80; padding: 4px 14px; border-radius:20px; font-size:0.85rem; font-weight:700;">
+            <div class="p-4" style="border-bottom: 1px solid var(--card-border);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0" style="color:var(--text-main);">📋 قائمة المنتجات الحالية</h5>
+                    <span style="background: rgba(16,185,129,0.15); color:var(--primary-dark); padding: 4px 14px; border-radius:20px; font-size:0.85rem; font-weight:700;">
                         <?php echo count($products); ?> منتج بالمخزن
                     </span>
                 </div>
+                <input type="text" id="productSearch" class="form-control" placeholder="🔍 ابحث باسم المنتج أو الباركود أو القسم..." oninput="filterProducts()">
             </div>
             <div class="table-responsive">
-                <table class="table modern-table mb-0 text-center align-middle">
+                <table id="productsTable" class="table modern-table mb-0 text-center align-middle">
                     <thead>
                         <tr>
                             <th>صورة</th>
@@ -305,20 +315,20 @@ include 'header.php';
                                     <img src="<?php echo htmlspecialchars($image_src); ?>" 
                                          width="48" height="48" 
                                          style="object-fit:cover; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);"
-                                         onerror="this.src='https://placehold.co/48x48/1e293b/4ade80?text=📦'">
+                                         onerror="this.src='https://placehold.co/48x48/d1fae5/059669?text=📦'">
                                 </td>
                                 <td class="text-start">
-                                    <div style="font-weight: 700; color: #f1f5f9; font-size:0.9rem;">
+                                     <div style="font-weight: 700; color: var(--text-main); font-size:0.9rem;">
                                         <?php echo htmlspecialchars($p['name']); ?>
                                     </div>
-                                    <div style="color: #475569; font-size:0.75rem;">
+                                     <div style="color: var(--text-muted); font-size:0.75rem;">
                                         <?php echo $p['barcode']; ?>
                                     </div>
                                 </td>
-                                <td style="color: #94a3b8; font-size:0.85rem;">
+                                 <td style="color: var(--text-muted); font-size:0.85rem;">
                                     <?php echo htmlspecialchars($p['cat_name']); ?>
                                 </td>
-                                <td style="color: #4ade80; font-weight: 700;">
+                                 <td style="color: var(--primary); font-weight: 700;">
                                     <?php echo number_format($p['price'], 0); ?> د.ع / <?php echo htmlspecialchars($p['unit']); ?>
                                 </td>
                                 <td>
@@ -352,10 +362,32 @@ include 'header.php';
 
 <!-- FOOTER -->
 <footer class="main-footer mt-5">
-    <p class="mb-0">© 2024 الهايبر ماركت المتكامل — جميع الحقوق محفوظة | PR122-3</p>
+    <p class="mb-0">© 2024 هايبر ماركت رضا أبو لحمة — جميع الحقوق محفوظة | PR122-3</p>
 </footer>
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function previewImage(inputId, previewId) {
+    const url = document.getElementById(inputId).value.trim();
+    const img = document.getElementById(previewId);
+    if (url.startsWith('http')) {
+        img.src = url; img.style.display = 'block';
+        img.onerror = () => img.style.display = 'none';
+    } else {
+        img.style.display = 'none';
+    }
+}
+function filterProducts() {
+    const q = document.getElementById('productSearch').value.toLowerCase();
+    document.querySelectorAll('#productsTable tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const editUrl = document.getElementById('editImgUrl');
+    if (editUrl) previewImage('editImgUrl','editImgPreview');
+});
+</script>
 </body>
 </html>

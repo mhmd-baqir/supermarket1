@@ -31,7 +31,7 @@ $unread = array_filter($notifications, fn($n) => !$n['is_read']);
         <h2 class="page-title mb-0">🔔 الإشعارات</h2>
         <?php if(count($unread) > 0): ?>
             <a href="notifications.php?mark_read=1" class="btn btn-sm fw-bold" 
-               style="background: rgba(22,163,74,0.15); border: 1px solid rgba(22,163,74,0.3); color: #4ade80; border-radius: 10px; padding: 8px 16px;">
+               style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: var(--primary-dark); border-radius: 10px; padding: 8px 16px;">
                 ✅ تحديد الكل كمقروء (<?= count($unread) ?>)
             </a>
         <?php endif; ?>
@@ -40,8 +40,8 @@ $unread = array_filter($notifications, fn($n) => !$n['is_read']);
     <?php if(count($notifications) === 0): ?>
         <div class="glass-card p-5 text-center">
             <div style="font-size: 4rem; margin-bottom: 16px;">🔕</div>
-            <h5 style="color: #94a3b8;">لا توجد إشعارات حالياً</h5>
-            <p style="color: #64748b; font-size: 0.9rem;">ستصلك إشعارات عند وجود عروض أو تحديثات على طلباتك</p>
+            <h5 style="color: var(--text-muted);">لا توجد إشعارات حالياً</h5>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">ستصلك إشعارات عند وجود عروض أو تحديثات على طلباتك</p>
         </div>
     <?php else: ?>
         <div class="d-flex flex-column gap-3">
@@ -62,22 +62,22 @@ $unread = array_filter($notifications, fn($n) => !$n['is_read']);
                 $isUnread = !$n['is_read'];
                 ?>
                 <div class="glass-card p-4 position-relative" 
-                     style="border-color: <?= $borderColor ?>; <?= $isUnread ? 'background: rgba(30,41,59,0.95);' : 'opacity: 0.7;' ?>">
+                     style="border-color: <?= $borderColor ?>; <?= $isUnread ? 'background: var(--card-bg);' : 'opacity: 0.7;' ?>">
                     <?php if($isUnread): ?>
-                        <span class="position-absolute" style="top: 12px; left: 12px; width: 10px; height: 10px; background: #16a34a; border-radius: 50; display: block; border-radius: 50%;"></span>
+                        <span class="position-absolute" style="top: 12px; left: 12px; width: 10px; height: 10px; background: var(--primary); border-radius: 50%; display: block;"></span>
                     <?php endif; ?>
                     <div class="d-flex align-items-start gap-3">
                         <div style="font-size: 2rem; flex-shrink: 0;"><?= $icon ?></div>
                         <div class="flex-fill">
-                            <h6 class="fw-bold mb-1" style="color: #f1f5f9;"><?= htmlspecialchars($n['title']) ?></h6>
-                            <p class="mb-2" style="color: #94a3b8; font-size: 0.9rem;"><?= htmlspecialchars($n['message']) ?></p>
+                            <h6 class="fw-bold mb-1" style="color: var(--text-main);"><?= htmlspecialchars($n['title']) ?></h6>
+                            <p class="mb-2" style="color: var(--text-muted); font-size: 0.9rem;"><?= htmlspecialchars($n['message']) ?></p>
                             <div class="d-flex align-items-center justify-content-between">
-                                <small style="color: #475569; font-size: 0.8rem;">
+                                <small style="color: var(--text-muted); font-size: 0.8rem;">
                                     🕐 <?= date('Y/m/d H:i', strtotime($n['created_at'])) ?>
                                 </small>
                                 <?php if($n['link']): ?>
                                     <a href="<?= htmlspecialchars($n['link']) ?>" class="btn btn-sm fw-bold"
-                                       style="background: rgba(22,163,74,0.15); border: 1px solid rgba(22,163,74,0.3); color: #4ade80; border-radius: 8px; font-size: 0.8rem; padding: 4px 12px;">
+                                       style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: var(--primary-dark); border-radius: 8px; font-size: 0.8rem; padding: 4px 12px;">
                                         عرض ←
                                     </a>
                                 <?php endif; ?>
@@ -90,11 +90,4 @@ $unread = array_filter($notifications, fn($n) => !$n['is_read']);
     <?php endif; ?>
 </div>
 
-<footer class="main-footer mt-5">
-    <p class="mb-0">© 2024 الهايبر ماركت المتكامل — جميع الحقوق محفوظة</p>
-</footer>
-
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+include 'footer.php';

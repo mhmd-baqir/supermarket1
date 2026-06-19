@@ -12,38 +12,65 @@ if (isset($_SESSION['user_id'])) {
 }
 
 $error = '';
+$active_tab = 'customer'; // التبويب الافتراضي هو الزبائن
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = trim($_POST['username']);
-    $password = trim($_POST['password']);
+    $login_type = $_POST['login_type'] ?? 'customer';
+    $active_tab = $login_type;
 
-    if (empty($username) || empty($password)) {
-        $error = 'يرجى إدخال اسم المستخدم وكلمة المرور.';
-    } else {
-        try {
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
-            $stmt->execute([$username]);
-            $user = $stmt->fetch();
+    if ($login_type === 'customer') {
+        $phone = trim($_POST['phone'] ?? '');
+        if (empty($phone)) {
+            $error = 'يرجى إدخال رقم الهاتف للدخول السريع.';
+        } else {
+            try {
+                // جلب المستخدم ذو الدور 'customer' برقم الهاتف
+                $stmt = $pdo->prepare("SELECT * FROM users WHERE (phone = ? OR username = ?) AND role = 'customer'");
+                $stmt->execute([$phone, $phone]);
+                $user = $stmt->fetch();
 
-            if ($user && password_verify($password, $user['password'])) {
-                if ($user['role'] === 'admin') {
+                if ($user) {
+                    $_SESSION['user_id']   = $user['id'];
+                    $_SESSION['username']  = $user['username'];
+                    $_SESSION['role']      = 'customer';
+                    $_SESSION['full_name'] = $user['full_name'];
+                    
+                    // التوجية لصفحة الشحن إذا كان قادماً منها، وإلا للرئيسية
+                    $redirect = $_SESSION['redirect_after_login'] ?? 'index.php';
+                    unset($_SESSION['redirect_after_login']);
+                    header("Location: $redirect");
+                    exit;
+                } else {
+                    $error = 'رقم الهاتف هذا غير مسجل لدينا. يمكنك إنشاء حساب جديد مجاناً.';
+                }
+            } catch (\PDOException $e) {
+                $error = 'حدث خطأ أثناء الاتصال بقاعدة البيانات: ' . htmlspecialchars($e->getMessage());
+            }
+        }
+    } else { // admin
+        $username = trim($_POST['username'] ?? '');
+        $password = trim($_POST['password'] ?? '');
+
+        if (empty($username) || empty($password)) {
+            $error = 'يرجى إدخال اسم المستخدم وكلمة المرور للمسؤول.';
+        } else {
+            try {
+                $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? AND role = 'admin'");
+                $stmt->execute([$username]);
+                $user = $stmt->fetch();
+
+                if ($user && password_verify($password, $user['password'])) {
                     $_SESSION['admin_logged_in'] = true;
                     $_SESSION['admin_username']  = $user['username'];
                     $_SESSION['role']            = 'admin';
                     header('Location: admin_dashboard.php');
                     exit;
                 } else {
-                    $_SESSION['user_id']   = $user['id'];
-                    $_SESSION['username']  = $user['username'];
-                    $_SESSION['role']      = 'customer';
-                    $_SESSION['full_name'] = $user['full_name'];
-                    header('Location: index.php');
-                    exit;
+                    $error = 'اسم مستخدم المسؤول أو كلمة المرور غير صحيحة!';
                 }
-            } else {
-                $error = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
+            } catch (\PDOException $e) {
+                $error = 'حدث خطأ أثناء الاتصال بقاعدة البيانات: ' . htmlspecialchars($e->getMessage());
             }
-        } catch (\PDOException $e) {
-            $error = 'حدث خطأ أثناء الاتصال بقاعدة البيانات: ' . htmlspecialchars($e->getMessage());
         }
     }
 }
@@ -51,11 +78,11 @@ include 'header.php';
 ?>
 
 <div class="row justify-content-center align-items-center" style="min-height: 75vh;">
-    <div class="col-md-5 col-lg-4 fade-in-up">
+    <div class="col-md-6 col-lg-5 fade-in-up">
         <div class="text-center mb-4">
             <div style="font-size: 3.5rem;">🔐</div>
-            <h2 class="fw-bold mt-2" style="color: #f1f5f9;">تسجيل الدخول</h2>
-            <p style="color: #94a3b8; font-size: 0.9rem;">مرحباً بك مجدداً في الهايبر ماركت المتكامل</p>
+            <h2 class="fw-bold mt-2" style="color: var(--text-main);">تسجيل الدخول</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">مرحباً بك مجدداً في هايبر ماركت رضا أبو لحمة</p>
         </div>
 
         <div class="checkout-card">
@@ -65,38 +92,79 @@ include 'header.php';
                 </div>
             <?php endif; ?>
 
-            <form method="POST" id="loginForm">
-                <div class="mb-4">
-                    <label class="form-label">👤 اسم المستخدم</label>
-                    <input type="text" name="username" id="username" class="form-control" 
-                           required placeholder="أدخل اسم المستخدم"
-                           value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
-                </div>
-                <div class="mb-4 position-relative">
-                    <label class="form-label">🔑 كلمة المرور</label>
-                    <input type="password" name="password" id="password" class="form-control" 
-                           required placeholder="أدخل كلمة المرور">
-                    <button type="button" onclick="togglePassword()" 
-                             style="position:absolute; left:12px; top:38px; background:none; border:none; color:#94a3b8; cursor:pointer; font-size:1.1rem;">
-                        👁️
+            <!-- تبويبات الدفع والتسجيل -->
+            <ul class="nav nav-pills nav-fill mb-4 p-1 rounded-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);">
+                <li class="nav-item">
+                    <button class="nav-link fw-bold <?php echo $active_tab === 'customer' ? 'active text-white bg-success' : 'text-muted'; ?>" 
+                            id="customer-tab" data-bs-toggle="pill" data-bs-target="#customer-form" type="button" role="tab" style="border-radius: 8px;">
+                        👥 دخول الزبائن (سريع)
                     </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-bold <?php echo $active_tab === 'admin' ? 'active text-white bg-danger' : 'text-muted'; ?>" 
+                            id="admin-tab" data-bs-toggle="pill" data-bs-target="#admin-form" type="button" role="tab" style="border-radius: 8px;">
+                        🔐 دخول الإدارة
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- فورم الزبائن -->
+                <div class="tab-pane fade <?php echo $active_tab === 'customer' ? 'show active' : ''; ?>" id="customer-form" role="tabpanel">
+                    <form method="POST">
+                        <input type="hidden" name="login_type" value="customer">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">📞 رقم الهاتف للزبون</label>
+                            <input type="text" name="phone" class="form-control form-control-lg" 
+                                   required placeholder="أدخل رقم هاتفك المسجل (مثال: 07XXXXXXXX)"
+                                   value="<?php echo $active_tab === 'customer' && isset($phone) ? htmlspecialchars($phone) : ''; ?>">
+                            <small class="text-muted mt-2 d-block">💡 دخول فوري وسريع دون الحاجة لكلمة مرور أو رمز بريدي.</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-lg w-100 fw-bold mb-3"
+                                style="background: linear-gradient(135deg,#16a34a,#15803d); color:white; border:none; border-radius:14px; padding:14px;">
+                            🚀 دخول سريع للماركت
+                        </button>
+                    </form>
                 </div>
 
-                <button type="submit" class="btn btn-lg w-100 fw-bold mb-3"
-                        style="background: linear-gradient(135deg,#16a34a,#15803d); color:white; border:none; border-radius:14px; padding:14px;">
-                    تسجيل الدخول
-                </button>
-            </form>
+                <!-- فورم المسؤولين -->
+                <div class="tab-pane fade <?php echo $active_tab === 'admin' ? 'show active' : ''; ?>" id="admin-form" role="tabpanel">
+                    <form method="POST">
+                        <input type="hidden" name="login_type" value="admin">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">👤 اسم مستخدم المدير</label>
+                            <input type="text" name="username" class="form-control" 
+                                   required placeholder="اسم المستخدم الخاص بالمدير"
+                                   value="<?php echo $active_tab === 'admin' && isset($username) ? htmlspecialchars($username) : ''; ?>">
+                        </div>
+                        <div class="mb-4 position-relative">
+                            <label class="form-label fw-bold">🔑 كلمة المرور</label>
+                            <input type="password" name="password" id="admin_password" class="form-control" 
+                                   required placeholder="أدخل كلمة المرور السرية">
+                            <button type="button" onclick="toggleAdminPassword()" 
+                                     style="position:absolute; left:12px; top:38px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem;">
+                                👁️
+                            </button>
+                        </div>
 
-            <div class="text-center mb-3">
-                <span class="text-muted small">ليس لديك حساب؟ </span>
-                <a href="register.php" class="text-success text-decoration-none fw-bold small">أنشئ حساباً جديداً</a>
+                        <button type="submit" class="btn btn-lg w-100 fw-bold mb-3 btn-danger"
+                                style="background: linear-gradient(135deg,#dc2626,#b91c1c); color:white; border:none; border-radius:14px; padding:14px;">
+                            🔐 تسجيل دخول المسؤول
+                        </button>
+                    </form>
+                </div>
             </div>
 
-            <div class="text-center p-3 mt-2" 
-                 style="background: rgba(245,158,11,0.05); border: 1px dashed rgba(245,158,11,0.2); border-radius: 12px;">
-                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 4px;">حساب المسؤول الافتراضي:</div>
-                <div style="color: #fbbf24; font-weight: 700; font-size: 0.8rem;">
+            <div class="text-center mt-3 pt-3 border-top border-secondary border-opacity-10">
+                <span class="text-muted small">ليس لديك حساب؟ </span>
+                <a href="register.php" class="text-success text-decoration-none fw-bold small">أنشئ حساباً جديداً بالهاتف فقط</a>
+            </div>
+
+            <div class="text-center p-3 mt-4" 
+                 style="background: var(--card-bg-secondary); border: 1px dashed var(--card-border); border-radius: 12px;">
+                <div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 4px;">حساب المسؤول الافتراضي للإدارة:</div>
+                <div style="color: var(--accent-dark); font-weight: 700; font-size: 0.8rem;">
                     المستخدم: <code>admin</code> | الباسورد: <code>admin123</code>
                 </div>
             </div>
@@ -104,18 +172,12 @@ include 'header.php';
     </div>
 </div>
 
-<!-- FOOTER -->
-<footer class="main-footer mt-5">
-    <p class="mb-0">© 2024 الهايبر ماركت المتكامل — جميع الحقوق محفوظة</p>
-</footer>
-
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-function togglePassword() {
-    const input = document.getElementById('password');
+function toggleAdminPassword() {
+    const input = document.getElementById('admin_password');
     input.type = input.type === 'password' ? 'text' : 'password';
 }
 </script>
-</body>
-</html>
+
+<?php include 'footer.php'; ?>
+

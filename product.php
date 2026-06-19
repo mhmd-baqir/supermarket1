@@ -95,7 +95,7 @@ include 'header.php';
                 <?php echo htmlspecialchars($product['cat_name']); ?>
             </a>
         </li>
-        <li class="breadcrumb-item active" style="color: #94a3b8;">
+        <li class="breadcrumb-item active" style="color: var(--text-muted);">
             <?php echo htmlspecialchars($product['name']); ?>
         </li>
     </ol>
@@ -110,7 +110,7 @@ include 'header.php';
                      class="img-fluid w-100" 
                      alt="<?php echo htmlspecialchars($product['name']); ?>"
                      style="height: 380px; object-fit: cover;"
-                     onerror="this.src='https://placehold.co/600x400/1e293b/4ade80?text=صورة+المنتج'">
+                     onerror="this.src='https://placehold.co/600x400/d1fae5/059669?text=صورة+المنتج'">
                 <div style="position: absolute; top: 15px; right: 15px;">
                     <span style="background: linear-gradient(135deg,#16a34a,#15803d); color:white; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.85rem;">
                         <?php echo htmlspecialchars($product['cat_name']); ?>
@@ -122,7 +122,7 @@ include 'header.php';
         <!-- تفاصيل المنتج -->
         <div class="col-md-7 d-flex flex-column justify-content-center">
             <div class="d-flex justify-content-between align-items-start">
-                <h1 class="fw-bold mb-2" style="color: #f1f5f9; font-size: 2rem;">
+                <h1 class="fw-bold mb-2" style="color: var(--text-main); font-size: 2rem;">
                     <?php echo htmlspecialchars($product['name']); ?>
                 </h1>
                 
@@ -149,38 +149,38 @@ include 'header.php';
                     }
                     ?>
                 </span>
-                <span class="text-white fw-bold small"><?php echo $avg_rating; ?> / 5</span>
+                <span class="fw-bold small" style="color: var(--text-main);"><?php echo $avg_rating; ?> / 5</span>
                 <span class="text-muted small">(<?php echo $total_reviews; ?> تقييم)</span>
             </div>
 
-            <p style="color: #94a3b8; font-size: 1.05rem; line-height: 1.8; margin-bottom: 25px;">
+            <p style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.8; margin-bottom: 25px;">
                 <?php echo htmlspecialchars($product['description']); ?>
             </p>
 
             <!-- السعر والمخزون -->
             <div class="d-flex align-items-center gap-3 mb-4">
-                <div style="background: linear-gradient(135deg, rgba(22,163,74,0.2), rgba(21,128,61,0.1)); 
-                            border: 1px solid rgba(22,163,74,0.4); 
+                <div style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.05)); 
+                            border: 1px solid rgba(16,185,129,0.25); 
                             border-radius: 16px; padding: 15px 25px;">
-                    <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 4px;">السعر</div>
-                    <div style="color: #4ade80; font-weight: 900; font-size: 2rem;">
+                    <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 4px;">السعر</div>
+                    <div style="color: var(--primary-dark); font-weight: 900; font-size: 2rem;">
                         <?php echo number_format($product['price'], 0); ?> <small style="font-size:1rem;">د.ع / <?php echo htmlspecialchars($product['unit']); ?></small>
                     </div>
                 </div>
 
-                <div style="background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); 
+                <div style="background: var(--card-bg-secondary); border: 1px solid var(--card-border); 
                             border-radius: 16px; padding: 15px 25px; text-align: center;">
-                    <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 4px;">المخزون</div>
-                    <div style="color: <?php echo $product['stock'] < 10 ? '#f87171' : '#60a5fa'; ?>; font-weight: 700; font-size: 1.5rem;">
+                    <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 4px;">المخزون</div>
+                    <div style="color: <?php echo $product['stock'] < 10 ? '#dc2626' : '#2563eb'; ?>; font-weight: 700; font-size: 1.5rem;">
                         <?php echo $product['stock']; ?> <small style="font-size:0.85rem;"><?php echo htmlspecialchars($product['unit']); ?></small>
                     </div>
                 </div>
             </div>
 
             <!-- الباركود -->
-            <div class="mb-4 p-3" style="background: rgba(15,23,42,0.6); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
-                <span style="color:#94a3b8; font-size:0.85rem;">📦 رقم الباركود: </span>
-                <code style="color: #fbbf24; font-size:0.95rem; font-weight: 700;">
+            <div class="mb-4 p-3" style="background: var(--card-bg-secondary); border-radius: 12px; border: 1px dashed var(--card-border);">
+                <span style="color: var(--text-muted); font-size:0.85rem;">📦 رقم الباركود: </span>
+                <code style="color: var(--accent-dark); font-size:0.95rem; font-weight: 700;">
                     <?php echo htmlspecialchars($product['barcode']); ?>
                 </code>
             </div>
@@ -197,10 +197,10 @@ include 'header.php';
                 </a>
                 <a href="index.php" 
                    class="btn btn-lg fw-bold"
-                   style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); 
-                          color: #cbd5e1; border-radius: 14px; padding: 14px 25px; transition: all 0.3s;"
-                   onmouseover="this.style.background='rgba(255,255,255,0.1)'"
-                   onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                   style="background: var(--btn-details-bg); border: 1px solid var(--btn-details-border); 
+                          color: var(--btn-details-color); border-radius: 14px; padding: 14px 25px; transition: all 0.3s;"
+                   onmouseover="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--btn-details-hover-bg')"
+                   onmouseout="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--btn-details-bg')">
                     ← العودة
                 </a>
             </div>
@@ -211,7 +211,7 @@ include 'header.php';
 <div class="row g-4 mb-5">
     <!-- التقييمات والتعليقات -->
     <div class="col-md-7 fade-in-up delay-2">
-        <h3 class="fw-bold text-white mb-3">💬 المراجعات والتقييمات (<?php echo $total_reviews; ?>)</h3>
+        <h3 class="fw-bold mb-3" style="color: var(--text-main);">💬 المراجعات والتقييمات (<?php echo $total_reviews; ?>)</h3>
 
         <!-- نموذج إضافة تقييم -->
         <div class="glass-card p-4 mb-4">
@@ -261,9 +261,9 @@ include 'header.php';
         <div class="d-flex flex-column gap-3">
             <?php if (count($reviews) > 0): ?>
                 <?php foreach ($reviews as $rev): ?>
-                    <div class="p-3 rounded-3" style="background: rgba(30,41,59,0.5); border: 1px solid rgba(255,255,255,0.05);">
+                    <div class="p-3 rounded-3" style="background: var(--card-bg-secondary); border: 1px solid var(--card-border);">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="fw-bold text-white mb-0"><?php echo htmlspecialchars($rev['full_name'] ?: $rev['username']); ?></h6>
+                            <h6 class="fw-bold mb-0" style="color: var(--text-main);"><?php echo htmlspecialchars($rev['full_name'] ?: $rev['username']); ?></h6>
                             <span class="text-warning">
                                 <?php 
                                 for ($i = 1; $i <= 5; $i++) {
@@ -286,7 +286,7 @@ include 'header.php';
 
     <!-- منتجات ذات صلة -->
     <div class="col-md-5 fade-in-up delay-2">
-        <h3 class="fw-bold text-white mb-3">🛍️ منتجات قد تعجبك</h3>
+        <h3 class="fw-bold mb-3" style="color: var(--text-main);">🛍️ منتجات قد تعجبك</h3>
         <div class="d-flex flex-column gap-3">
             <?php if (count($related_products) > 0): ?>
                 <?php foreach ($related_products as $rel_prod): ?>
@@ -300,9 +300,9 @@ include 'header.php';
                         <img src="<?php echo htmlspecialchars($rel_image); ?>" 
                              alt="<?php echo htmlspecialchars($rel_prod['name']); ?>" 
                              style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;"
-                             onerror="this.src='https://placehold.co/100x100/1e293b/4ade80?text=منتج'">
+                             onerror="this.src='https://placehold.co/100x100/d1fae5/059669?text=منتج'">
                         <div class="flex-fill">
-                            <h6 class="fw-bold text-white mb-1"><?php echo htmlspecialchars($rel_prod['name']); ?></h6>
+                            <h6 class="fw-bold mb-1" style="color: var(--text-main);"><?php echo htmlspecialchars($rel_prod['name']); ?></h6>
                             <p class="text-muted small mb-2 text-truncate" style="max-width: 200px;"><?php echo htmlspecialchars($rel_prod['description']); ?></p>
                             <span class="price-badge py-1 px-3" style="font-size: 0.8rem;"><?php echo number_format($rel_prod['price'], 0); ?> د.ع</span>
                         </div>
@@ -318,11 +318,4 @@ include 'header.php';
 </div>
 
 <!-- FOOTER -->
-<footer class="main-footer mt-5">
-    <p class="mb-0">© 2024 الهايبر ماركت المتكامل — جميع الحقوق محفوظة | PR122-3</p>
-</footer>
-
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+include 'footer.php';
