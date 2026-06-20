@@ -34,6 +34,16 @@ if ($search_query) {
 }
 $products = $prod_stmt->fetchAll();
 
+// تحديث حالة المفضلة لزوار الجلسة المؤقتة
+if (!$is_customer && isset($_SESSION['guest_wishlist']) && is_array($_SESSION['guest_wishlist'])) {
+    foreach ($products as &$product) {
+        if (in_array($product['id'], $_SESSION['guest_wishlist'])) {
+            $product['in_wishlist'] = 1;
+        }
+    }
+    unset($product);
+}
+
 // أفضل 6 منتجات للعروض
 $featured_stmt = $pdo->query("SELECT p.*, COALESCE((SELECT AVG(r.rating) FROM reviews r WHERE r.product_id = p.id), 0) as avg_rating FROM products p ORDER BY p.id DESC LIMIT 6");
 $featured_products = $featured_stmt->fetchAll();
@@ -388,15 +398,17 @@ body.dark-mode .cat-pill:hover { background: rgba(16,185,129,0.15); }
                              onmouseout="this.style.transform='scale(1)'"
                              onerror="this.src='https://placehold.co/400x200/d1fae5/059669?text=منتج'">
 
-                        <?php if($is_customer): ?>
-                            <a href="wishlist.php?action=<?php echo $product['in_wishlist']?'remove':'add'; ?>&id=<?php echo $product['id']; ?>"
-                               class="btn btn-sm position-absolute top-0 start-0 m-2 rounded-circle shadow"
-                               style="background:rgba(255,255,255,0.9);border:1px solid rgba(16,185,129,0.2);width:34px;height:34px;display:flex;align-items:center;justify-content:center;z-index:5;">
+                        <?php 
+                        $show_wishlist_btn = (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin');
+                        if($show_wishlist_btn): ?>
+                            <button onclick="toggleWishlist(this, <?php echo $product['id']; ?>, <?php echo $product['in_wishlist'] ? 1 : 0; ?>)"
+                               class="btn btn-sm position-absolute top-0 start-0 m-2 rounded-circle shadow wishlist-btn"
+                               style="background:rgba(255,255,255,0.9);border:1px solid rgba(16,185,129,0.2);width:34px;height:34px;display:flex;align-items:center;justify-content:center;z-index:5;cursor:pointer;transition:all 0.3s;">
                                 <?php echo $product['in_wishlist']?'❤️':'🤍'; ?>
-                            </a>
+                            </button>
                         <?php else: ?>
-                            <a href="login.php" class="btn btn-sm position-absolute top-0 start-0 m-2 rounded-circle shadow"
-                               style="background:rgba(255,255,255,0.9);border:1px solid rgba(16,185,129,0.2);width:34px;height:34px;display:flex;align-items:center;justify-content:center;z-index:5;">🤍</a>
+                            <button class="btn btn-sm position-absolute top-0 start-0 m-2 rounded-circle shadow" disabled
+                               style="background:rgba(255,255,255,0.9);border:1px solid rgba(16,185,129,0.2);width:34px;height:34px;display:flex;align-items:center;justify-content:center;z-index:5;opacity:0.5;">🤍</button>
                         <?php endif; ?>
                     </div>
 
@@ -486,4 +498,64 @@ body.dark-mode .cat-pill:hover { background: rgba(16,185,129,0.15); }
     tick();
     setInterval(tick,1000);
 })();
+
+// ===== AJAX زر المفضلة =====
+function toggleWishlist(btn, productId, currentState) {
+    var inWishlist = parseInt(currentState);
+    var action = inWishlist ? 'remove' : 'add';
+
+    // تعطيل الزر أثناء الطلب
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+
+    var formData = new FormData();
+    formData.append('product_id', productId);
+    formData.append('action', action);
+
+    fetch('wishlist_ajax.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(function(res){ return res.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+
+        if (data.success) {
+            var newState = data.in_wishlist ? 1 : 0;
+            btn.setAttribute('onclick', 'toggleWishlist(this, ' + productId + ', ' + newState + ')');
+            btn.innerHTML = data.in_wishlist ? '❤️' : '🤍';
+            // أنيميشن بسيط
+            btn.style.transform = 'scale(1.3)';
+            setTimeout(function(){ btn.style.transform = 'scale(1)'; }, 250);
+            showWishlistToast(data.message, data.in_wishlist ? 'success' : 'info');
+        } else {
+            showWishlistToast(data.message || 'حدث خطأ', 'danger');
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        showWishlistToast('حدث خطأ في الاتصال', 'danger');
+    });
+}
+
+function showWishlistToast(msg, type) {
+    var colors = {
+        'success': 'rgba(16,185,129,0.95)',
+        'info':    'rgba(59,130,246,0.95)',
+        'danger':  'rgba(220,38,38,0.95)',
+        'warning': 'rgba(245,158,11,0.95)'
+    };
+    var toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:24px;left:24px;z-index:9999;background:' + (colors[type]||colors.info) + ';color:#fff;padding:12px 22px;border-radius:12px;font-weight:700;font-size:0.92rem;box-shadow:0 8px 25px rgba(0,0,0,0.25);direction:rtl;transition:all 0.4s;opacity:0;transform:translateY(20px);';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(function(){ toast.style.opacity='1'; toast.style.transform='translateY(0)'; }, 10);
+    setTimeout(function(){
+        toast.style.opacity='0';
+        toast.style.transform='translateY(20px)';
+        setTimeout(function(){ toast.remove(); }, 400);
+    }, 2800);
+}
 </script>

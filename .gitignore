@@ -1,0 +1,22 @@
+# Local configurations
+my_custom.ini
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+.qodo/
+.gemini/
+
+# Operating system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Private credentials
+credentials.php

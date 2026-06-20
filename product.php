@@ -127,16 +127,18 @@ include 'header.php';
                 </h1>
                 
                 <!-- زر المفضلة -->
-                <?php if ($is_customer): ?>
-                    <a href="wishlist.php?action=<?php echo $in_wishlist ? 'remove' : 'add'; ?>&id=<?php echo $product['id']; ?>" 
-                       class="btn btn-outline-danger border-0 fs-4" 
-                       title="<?php echo $in_wishlist ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'; ?>">
+                <?php 
+                $can_wishlist = (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin');
+                if ($can_wishlist): ?>
+                    <button id="product-wishlist-btn"
+                       onclick="toggleWishlistProduct(this, <?php echo $product['id']; ?>, <?php echo $in_wishlist ? 1 : 0; ?>)"
+                       class="btn btn-outline-danger border-0 fs-4"
+                       title="<?php echo $in_wishlist ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'; ?>"
+                       style="transition:all 0.3s;">
                         <?php echo $in_wishlist ? '❤️' : '🤍'; ?>
-                    </a>
+                    </button>
                 <?php else: ?>
-                    <a href="login.php" class="btn btn-outline-secondary border-0 fs-4" title="سجل دخول لإضافة المفضلة">
-                        🤍
-                    </a>
+                    <button class="btn btn-outline-secondary border-0 fs-4" disabled title="المفضلة للعملاء فقط">🤍</button>
                 <?php endif; ?>
             </div>
 
@@ -319,3 +321,64 @@ include 'header.php';
 
 <!-- FOOTER -->
 <?php include 'footer.php'; ?>
+
+<script>
+function toggleWishlistProduct(btn, productId, currentState) {
+    var inWishlist = parseInt(currentState);
+    var action = inWishlist ? 'remove' : 'add';
+
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+
+    var formData = new FormData();
+    formData.append('product_id', productId);
+    formData.append('action', action);
+
+    fetch('wishlist_ajax.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(function(res){ return res.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        if (data.success) {
+            var newState = data.in_wishlist ? 1 : 0;
+            btn.setAttribute('onclick', 'toggleWishlistProduct(this, ' + productId + ', ' + newState + ')');
+            btn.innerHTML = data.in_wishlist ? '❤️' : '🤍';
+            btn.title = data.in_wishlist ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة';
+            btn.style.transform = 'scale(1.35)';
+            setTimeout(function(){ btn.style.transform = 'scale(1)'; }, 300);
+            showProductToast(data.message, data.in_wishlist ? 'success' : 'info');
+        } else {
+            showProductToast(data.message || 'حدث خطأ', 'danger');
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        showProductToast('حدث خطأ في الاتصال', 'danger');
+    });
+}
+
+function showProductToast(msg, type) {
+    var colors = {
+        'success': 'rgba(16,185,129,0.95)',
+        'info':    'rgba(59,130,246,0.95)',
+        'danger':  'rgba(220,38,38,0.95)'
+    };
+    var toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:24px;left:24px;z-index:9999;background:' +
+        (colors[type] || colors.info) +
+        ';color:#fff;padding:12px 22px;border-radius:12px;font-weight:700;font-size:0.92rem;' +
+        'box-shadow:0 8px 25px rgba(0,0,0,0.25);direction:rtl;transition:all 0.4s;opacity:0;transform:translateY(20px);';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(function(){ toast.style.opacity='1'; toast.style.transform='translateY(0)'; }, 10);
+    setTimeout(function(){
+        toast.style.opacity='0';
+        toast.style.transform='translateY(20px)';
+        setTimeout(function(){ toast.remove(); }, 400);
+    }, 2800);
+}
+</script>

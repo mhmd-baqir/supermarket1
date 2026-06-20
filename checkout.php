@@ -216,9 +216,14 @@ include 'header.php';
                         <!-- خريطة كربلاء التفاعلية -->
                         <div class="col-12 my-3">
                             <label class="form-label d-block text-success fw-bold">🗺️ حدد موقع منزلك الجغرافي على خريطة كربلاء المقدسة: <span class="text-danger">*</span></label>
+                            <button type="button" onclick="detectMyLocation()" class="btn btn-sm fw-bold mb-2"
+                                    style="background: linear-gradient(135deg,#3b82f6,#2563eb); color:white; border:none; border-radius:10px; padding:8px 18px;">
+                                📍 تحديد موقعي تلقائياً (GPS)
+                            </button>
+                            <span id="geoStatus" style="color:#94a3b8; font-size:0.85rem; margin-right:10px;"></span>
                             <div id="checkoutMap" style="height: 350px; border-radius: 12px; border: 2px solid rgba(22, 163, 74, 0.4); z-index: 10;"></div>
                             <small class="text-muted mt-2 d-block">
-                                💡 <strong>طريقة التحديد:</strong> تصفح الخريطة وانقر على موقع منزلك بدقة. ستظهر علامة حمراء تشير للموقع. يمكنك سحبها لتعديلها.
+                                💡 <strong>طريقة التحديد:</strong> سيتم تحديد موقعك تلقائياً عبر GPS. يمكنك أيضاً النقر على الخريطة أو سحب العلامة لتعديل الموقع يدوياً.
                             </small>
                         </div>
                     </div>
@@ -390,7 +395,7 @@ fetch('cart_ajax.php?get_total=1')
     }).catch(() => {});
 
 
-// تهيئة خريطة كربلاء باستخدام Google Maps
+// تهيئة خريطة كربلاء باستخدام Leaflet + OpenStreetMap (مجاني بدون مفتاح API)
 let map;
 let marker;
 const karbala = { lat: 32.6160, lng: 44.0249 };
@@ -399,47 +404,97 @@ function initMap() {
     const prevLat = document.getElementById('delivery_lat').value;
     const prevLng = document.getElementById('delivery_lng').value;
     const initialCenter = (prevLat && prevLng) 
-        ? { lat: parseFloat(prevLat), lng: parseFloat(prevLng) }
-        : karbala;
+        ? [parseFloat(prevLat), parseFloat(prevLng)]
+        : [karbala.lat, karbala.lng];
 
-    map = new google.maps.Map(document.getElementById("checkoutMap"), {
-        zoom: 13,
-        center: initialCenter
-    });
+    map = L.map('checkoutMap').setView(initialCenter, 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19
+    }).addTo(map);
 
     if (prevLat && prevLng) {
-        placeMarker(initialCenter);
+        placeMarker(L.latLng(parseFloat(prevLat), parseFloat(prevLng)));
+    } else {
+        // تحديد الموقع تلقائياً عند فتح الصفحة
+        detectMyLocation();
     }
 
-    map.addListener("click", (event) => {
-        placeMarker(event.latLng);
+    map.on('click', function(e) {
+        placeMarker(e.latlng);
     });
 }
 
-function placeMarker(latLng) {
-    const lat = (typeof latLng.lat === 'function') ? latLng.lat() : latLng.lat;
-    const lng = (typeof latLng.lng === 'function') ? latLng.lng() : latLng.lng;
-
-    document.getElementById('delivery_lat').value = lat;
-    document.getElementById('delivery_lng').value = lng;
+function placeMarker(latlng) {
+    document.getElementById('delivery_lat').value = latlng.lat;
+    document.getElementById('delivery_lng').value = latlng.lng;
 
     if (marker) {
-        marker.setPosition(latLng);
+        marker.setLatLng(latlng);
     } else {
-        marker = new google.maps.Marker({
-            position: latLng,
-            map: map,
-            draggable: true
-        });
+        marker = L.marker(latlng, { draggable: true }).addTo(map);
 
-        marker.addListener("dragend", () => {
-            const pos = marker.getPosition();
-            document.getElementById('delivery_lat').value = pos.lat();
-            document.getElementById('delivery_lng').value = pos.lng();
+        marker.on('dragend', function() {
+            const pos = marker.getLatLng();
+            document.getElementById('delivery_lat').value = pos.lat;
+            document.getElementById('delivery_lng').value = pos.lng;
         });
     }
 }
+
+// تحديد الموقع تلقائياً باستخدام GPS المتصفح
+function detectMyLocation() {
+    const statusEl = document.getElementById('geoStatus');
+    if (!navigator.geolocation) {
+        statusEl.innerHTML = '❌ متصفحك لا يدعم تحديد الموقع';
+        statusEl.style.color = '#f87171';
+        return;
+    }
+    statusEl.innerHTML = '⏳ جاري تحديد موقعك...';
+    statusEl.style.color = '#f59e0b';
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
+            map.setView(latlng, 16);
+            placeMarker(latlng);
+            statusEl.innerHTML = '✅ تم تحديد موقعك بنجاح!';
+            statusEl.style.color = '#4ade80';
+        },
+        function(error) {
+            let msg = '❌ ';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    msg += 'تم رفض إذن الموقع. يرجى السماح بالوصول للموقع أو تحديده يدوياً.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    msg += 'موقعك غير متاح حالياً. حدد الموقع يدوياً على الخريطة.';
+                    break;
+                case error.TIMEOUT:
+                    msg += 'انتهت مهلة تحديد الموقع. حاول مرة أخرى أو حدد يدوياً.';
+                    break;
+                default:
+                    msg += 'حدث خطأ غير متوقع. حدد الموقع يدوياً.';
+            }
+            statusEl.innerHTML = msg;
+            statusEl.style.color = '#f87171';
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+}
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?callback=initMap" async defer></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// تحميل الخريطة بعد تحميل مكتبة Leaflet
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('checkoutMap')) {
+        initMap();
+    }
+});
+</script>
 <script>
 <?php include 'footer.php'; ?>
+
+

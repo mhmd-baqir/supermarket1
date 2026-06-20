@@ -79,6 +79,7 @@ include 'header.php';
                 <a href="admin_products.php" class="btn btn-outline-success fw-bold btn-sm px-3">📦 المنتجات</a>
                 <a href="admin_orders.php" class="btn btn-outline-success fw-bold btn-sm px-3">🧾 الطلبات</a>
                 <a href="admin_coupons.php" class="btn btn-success fw-bold btn-sm px-3 active">🎟️ الكوبونات</a>
+                <a href="admin_settings.php" class="btn btn-outline-success fw-bold btn-sm px-3">⚙️ الإعدادات</a>
                 <a href="logout.php" class="btn btn-danger fw-bold btn-sm px-3">🚪 خروج</a>
             </div>
         </div>

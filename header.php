@@ -130,6 +130,45 @@
             color: var(--accent);
         }
 
+        .site-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            object-fit: cover;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 2px 6px rgba(16, 185, 129, 0.3));
+            border: 2px solid transparent;
+            background: #fff;
+            padding: 2px;
+        }
+
+        .navbar-brand:hover .site-logo {
+            transform: rotate(-8deg) scale(1.1);
+            filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.5));
+        }
+
+        /* Dark mode logo styling — white badge with emerald glow */
+        body.dark-mode .site-logo {
+            background: #ffffff;
+            border: 2px solid rgba(16, 185, 129, 0.6);
+            border-radius: 14px;
+            padding: 3px;
+            box-shadow: 
+                0 0 0 1px rgba(16, 185, 129, 0.15),
+                0 0 15px rgba(16, 185, 129, 0.25),
+                0 4px 12px rgba(0, 0, 0, 0.3);
+            filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.3));
+        }
+
+        body.dark-mode .navbar-brand:hover .site-logo {
+            border-color: rgba(16, 185, 129, 0.9);
+            box-shadow: 
+                0 0 0 2px rgba(16, 185, 129, 0.2),
+                0 0 20px rgba(16, 185, 129, 0.4),
+                0 6px 16px rgba(0, 0, 0, 0.35);
+            filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5));
+        }
+
         .nav-link {
             color: var(--text-muted) !important;
             font-weight: 600;
@@ -734,7 +773,8 @@
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg">
   <div class="container">
-    <a class="navbar-brand" href="index.php">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="index.php">
+      <img src="uploads/logo.png" alt="لوقو هايبر ماركت" class="site-logo">
       رضا<span> أبو لحمة</span>
     </a>
     <button class="navbar-toggler border-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">

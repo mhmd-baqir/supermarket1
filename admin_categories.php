@@ -8,6 +8,16 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['role'] !== 'admin') {
 
 $message = ''; $message_type = '';
 
+// إضافة عمود icon_image تلقائياً إن لم يكن موجوداً
+try {
+    $pdo->exec("ALTER TABLE `categories` ADD COLUMN IF NOT EXISTS `icon_image` VARCHAR(255) DEFAULT NULL AFTER `description`");
+} catch (PDOException $e) { /* العمود موجود بالفعل */ }
+
+// إنشاء مجلد رفع أيقونات الأقسام
+if (!is_dir('uploads/categories')) {
+    mkdir('uploads/categories', 0755, true);
+}
+
 // الأقسام الافتراضية السبعة مع أيقوناتها
 $DEFAULT_CATEGORIES = [
     ['🥩', 'اللحوم والمشويات',         'لحوم طازجة ومجمدة، دجاج، مشاوي وكباب'],
@@ -42,12 +52,33 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['add_category'])) {
     $desc = trim($_POST['description'] ?? '');
     $icon = trim($_POST['icon'] ?? '📁');
     $admin_id = !empty($_POST['admin_id']) ? intval($_POST['admin_id']) : null;
-    if (empty($name)) {
+    $icon_image = null;
+
+    // معالجة رفع صورة الأيقونة
+    if (!empty($_FILES['icon_image']['name']) && $_FILES['icon_image']['error'] === UPLOAD_ERR_OK) {
+        $allowed = ['image/jpeg','image/png','image/gif','image/webp','image/svg+xml'];
+        $file_type = $_FILES['icon_image']['type'];
+        $file_size = $_FILES['icon_image']['size'];
+        if (!in_array($file_type, $allowed)) {
+            $message = '⚠️ نوع الملف غير مدعوم. الأنواع المسموحة: JPG, PNG, GIF, WEBP, SVG';
+            $message_type = 'danger';
+        } elseif ($file_size > 2 * 1024 * 1024) {
+            $message = '⚠️ حجم الصورة كبير جداً. الحد الأقصى 2 ميجابايت.';
+            $message_type = 'danger';
+        } else {
+            $ext = pathinfo($_FILES['icon_image']['name'], PATHINFO_EXTENSION);
+            $icon_image = 'uploads/categories/' . uniqid('cat_') . '.' . $ext;
+            move_uploaded_file($_FILES['icon_image']['tmp_name'], $icon_image);
+        }
+    }
+
+    if (empty($name) && empty($message)) {
         $message='اسم القسم حقل إلزامي.'; $message_type='danger';
-    } else {
+    } elseif (empty($message)) {
         try {
-            $pdo->prepare("INSERT INTO categories (name,description,admin_id) VALUES (?,?,?)")->execute(["$icon $name", $desc, $admin_id]);
-            $message="تم إضافة القسم '$icon $name' بنجاح."; $message_type='success';
+            $display_name = $icon_image ? $name : "$icon $name";
+            $pdo->prepare("INSERT INTO categories (name,description,admin_id,icon_image) VALUES (?,?,?,?)")->execute([$display_name, $desc, $admin_id, $icon_image]);
+            $message="تم إضافة القسم '$display_name' بنجاح."; $message_type='success';
         } catch (\PDOException $e) {
             $message="خطأ: ".htmlspecialchars($e->getMessage()); $message_type='danger';
         }
@@ -123,6 +154,7 @@ include 'header.php';
         <a href="admin_categories.php" class="btn btn-success fw-bold btn-sm px-3" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));border:none;">🏷️ الأقسام</a>
         <a href="admin_orders.php"     class="btn btn-outline-success fw-bold btn-sm px-3">🧾 الطلبات</a>
         <a href="admin_users.php"      class="btn btn-outline-success fw-bold btn-sm px-3">👥 المستخدمين</a>
+        <a href="admin_settings.php"   class="btn btn-outline-success fw-bold btn-sm px-3">⚙️ الإعدادات</a>
         <a href="logout.php"           class="btn btn-danger fw-bold btn-sm px-3">🚪 خروج</a>
       </div>
     </div>
@@ -197,10 +229,70 @@ include 'header.php';
         </form>
       <?php else: ?>
         <h5 class="fw-bold mb-3" style="color:var(--primary);">➕ إضافة قسم جديد</h5>
-        <form method="POST" action="admin_categories.php">
+        <form method="POST" action="admin_categories.php" enctype="multipart/form-data">
           <div class="mb-3">
             <label class="form-label">الأيقونة (اختياري)</label>
-            <input type="text" name="icon" class="form-control" placeholder="🛒" maxlength="5" value="📁">
+            <input type="hidden" name="icon" id="selectedIcon" value="📁">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <div id="iconPreview" style="font-size:2rem; width:45px; height:45px; display:flex; align-items:center; justify-content:center; background:rgba(16,185,129,0.1); border:2px solid var(--primary); border-radius:10px;">📁</div>
+              <input type="text" id="customIconInput" class="form-control" placeholder="أو اكتب إيموجي يدوياً..." maxlength="5" style="max-width:200px;"
+                     oninput="if(this.value.trim()){document.getElementById('selectedIcon').value=this.value.trim();document.getElementById('iconPreview').textContent=this.value.trim();}">
+            </div>
+            <div class="d-flex flex-wrap gap-1">
+              <?php
+              $emojis = ['🛒','🥩','🥦','🧀','🥫','🍬','🧃','🧹','🍞','🐟','🍎','🍕','☕','🧊','🍿','🥚','🌶️','🫒','🧈','🍯','🥜','🧂','🫖','🍰','🧁','💊','🧴','🪥','📦','🎁'];
+              foreach ($emojis as $ej):
+              ?>
+                <button type="button" class="btn btn-sm emoji-pick" onclick="pickEmoji(this, '<?= $ej ?>')"
+                        style="font-size:1.3rem; padding:4px 8px; border:1px solid var(--card-border); border-radius:8px; background:rgba(15,23,42,0.3); cursor:pointer; transition:all 0.2s;"
+                        onmouseover="this.style.transform='scale(1.2)';this.style.background='rgba(16,185,129,0.2)'"
+                        onmouseout="this.style.transform='scale(1)';this.style.background='rgba(15,23,42,0.3)'"><?= $ej ?></button>
+              <?php endforeach; ?>
+            </div>
+            <script>
+            function pickEmoji(btn, emoji) {
+                document.getElementById('selectedIcon').value = emoji;
+                document.getElementById('iconPreview').textContent = emoji;
+                document.getElementById('customIconInput').value = '';
+                // تمييز الزر المختار
+                document.querySelectorAll('.emoji-pick').forEach(b => {
+                    b.style.border = '1px solid var(--card-border)';
+                    b.style.background = 'rgba(15,23,42,0.3)';
+                });
+                btn.style.border = '2px solid var(--primary)';
+                btn.style.background = 'rgba(16,185,129,0.2)';
+            }
+            </script>
+            <div class="mt-2 pt-2" style="border-top:1px solid var(--card-border);">
+              <label class="form-label small fw-bold" style="color:var(--accent-dark);">📂 أو ارفع صورة من جهازك:</label>
+              <input type="file" name="icon_image" id="iconFileInput" class="form-control form-control-sm" accept="image/*"
+                     onchange="previewIconFile(this)">
+              <div id="iconFilePreview" class="mt-2" style="display:none;">
+                <img id="iconFileImg" src="" alt="" style="width:45px; height:45px; object-fit:cover; border-radius:10px; border:2px solid var(--primary);">
+                <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearIconFile()">✕ إزالة</button>
+              </div>
+              <small class="text-muted d-block mt-1">الأنواع المدعومة: JPG, PNG, GIF, WEBP, SVG — الحد الأقصى: 2MB</small>
+            </div>
+            <script>
+            function previewIconFile(input) {
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('iconFileImg').src = e.target.result;
+                        document.getElementById('iconFilePreview').style.display = 'flex';
+                        document.getElementById('iconFilePreview').style.alignItems = 'center';
+                        // إخفاء معاينة الإيموجي عند اختيار صورة
+                        document.getElementById('iconPreview').style.display = 'none';
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+            function clearIconFile() {
+                document.getElementById('iconFileInput').value = '';
+                document.getElementById('iconFilePreview').style.display = 'none';
+                document.getElementById('iconPreview').style.display = 'flex';
+            }
+            </script>
           </div>
           <div class="mb-3">
             <label class="form-label">اسم القسم <span class="text-danger">*</span></label>
@@ -260,7 +352,12 @@ include 'header.php';
             <?php foreach ($categories as $cat): ?>
               <tr>
                 <td class="fw-bold" style="color:var(--primary);"><?= $cat['id'] ?></td>
-                <td class="fw-bold text-start" style="color:var(--text-main);"><?= htmlspecialchars($cat['name']) ?></td>
+                <td class="fw-bold text-start" style="color:var(--text-main);">
+                  <?php if (!empty($cat['icon_image']) && file_exists($cat['icon_image'])): ?>
+                    <img src="<?= htmlspecialchars($cat['icon_image']) ?>" alt="" style="width:28px;height:28px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-left:6px;">
+                  <?php endif; ?>
+                  <?= htmlspecialchars($cat['name']) ?>
+                </td>
                 <td class="fw-bold text-start text-success small"><?= htmlspecialchars($cat['admin_full_name'] ?: ($cat['admin_username'] ?: 'عام / غير مخصص')) ?></td>
                 <td class="text-start small" style="color:var(--text-muted);max-width:200px;">
                   <?= htmlspecialchars(mb_substr($cat['description'],0,60)) ?><?= mb_strlen($cat['description'])>60?'…':'' ?>

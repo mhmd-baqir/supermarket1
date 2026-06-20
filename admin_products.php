@@ -135,6 +135,7 @@ include 'header.php';
                 <a href="admin_categories.php" class="btn btn-outline-success fw-bold btn-sm px-3">🏷️ الأقسام</a>
                 <a href="admin_orders.php"     class="btn btn-outline-success fw-bold btn-sm px-3">🧾 الطلبات</a>
                 <a href="admin_users.php"      class="btn btn-outline-success fw-bold btn-sm px-3">👥 المستخدمين</a>
+                <a href="admin_settings.php"   class="btn btn-outline-success fw-bold btn-sm px-3">⚙️ الإعدادات</a>
                 <a href="logout.php"           class="btn btn-danger fw-bold btn-sm px-3">🚪 خروج</a>
             </div>
         </div>

@@ -216,8 +216,10 @@ INSERT INTO `drivers` (`id`, `name`, `phone`, `vehicle`, `status`) VALUES
 
 -- إدخال حساب مدير افتراضي (اسم المستخدم: admin ، كلمة المرور: admin123)
 -- الباسورد مشفر بـ bcrypt (admin123)
-INSERT INTO `users` (`username`, `password`, `full_name`, `role`) VALUES 
-('admin', '$2y$10$y4ruJ9z12.cflqbnBDNhs.MtwotaCGDw4tKeXp8ijs8VnXWHdCeCy', 'مدير النظام رضا أبو لحمة', 'admin');
+INSERT INTO `users` (`id`, `username`, `password`, `full_name`, `role`) VALUES 
+(1, 'admin', '$2y$10$y4ruJ9z12.cflqbnBDNhs.MtwotaCGDw4tKeXp8ijs8VnXWHdCeCy', 'مدير النظام رضا أبو لحمة', 'admin'),
+(2, '07700000000', '$2y$10$y4ruJ9z12.cflqbnBDNhs.MtwotaCGDw4tKeXp8ijs8VnXWHdCeCy', 'Ahmed Customer', 'customer');
+
 
 -- أكواد الخصم الترويجية
 INSERT INTO `coupons` (`code`, `discount_type`, `discount_value`, `min_order`, `max_uses`, `is_active`) VALUES
